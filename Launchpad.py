@@ -297,6 +297,31 @@ class Launchpad(ControlSurface):
 				self.init()
 				self._suppress_send_midi = False
 				self.set_enabled(True)
+		# Custom reload sysex message: F0 00 20 29 7F 7F F7
+		elif len(midi_bytes) == 7 and midi_bytes[:4] == (240, 0, 32, 41) and midi_bytes[4:6] == (127, 127):
+			self.log_message("🔄 Reload signal received - refreshing Launchpad95 state...")
+			try:
+				# Clear any cached states
+				if hasattr(self, '_selector') and self._selector:
+					# Force update all components
+					if hasattr(self._selector, '_session'):
+						self._selector._session.set_enabled(False)
+						self._selector._session.set_enabled(True)
+					if hasattr(self._selector, '_device_controller'):
+						self._selector._device_controller.set_enabled(False)
+						self._selector._device_controller.set_enabled(True)
+					# Refresh the main selector
+					self._selector.set_enabled(False)
+					self._selector.set_enabled(True)
+					self._selector.update()
+				
+				# Force hardware refresh
+				self.refresh_state()
+				self.schedule_message(1, self._update_hardware)
+				
+				self.log_message("✅ Launchpad95 reload completed successfully!")
+			except Exception as e:
+				self.log_message(f"❌ Error during reload: {str(e)}")
 		else:
 			ControlSurface.handle_sysex(self,midi_bytes)
 		
