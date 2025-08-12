@@ -748,7 +748,7 @@ class StepSequencerComponent2(StepSequencerComponent):
 		
 	def _set_scale_selector(self):
 		super(StepSequencerComponent2, self)._set_scale_selector()
-		self._scale_selector._mode = "diatonic"
+		self._scale_selector._mode = "chromatic"
 		self._scale_selector._drumrack = False
 
 	def _set_track_controller(self):
