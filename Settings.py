@@ -19,13 +19,13 @@ class Settings():
     # the 3 first value configure the 3 sub modes of button user mode 1,
     # and following ones are for user mode 2 button
     USER_MODES_1 = [
-		"instrument"
-		, "device"
+		# "instrument",
+		"device"
 		# ,"user 1"
     ]
     USER_MODES_2 = [
-		"drum stepseq"
-		, "melodic stepseq"
+		# "drum stepseq",
+		 "melodic stepseq"
 		# ,"user 2"
     ]
 
