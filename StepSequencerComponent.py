@@ -161,6 +161,8 @@ class StepSequencerComponent(CompoundComponent):
         self._track_controller.set_next_scene_button(self._top_buttons[1])
         self._track_controller.set_prev_track_button(self._top_buttons[2])
         self._track_controller.set_next_track_button(self._top_buttons[3])
+        # Add play/stop functionality to first side button (was scale button)
+        self._track_controller.set_start_stop_button(self._side_buttons[0])
 
     def _set_scale_selector(self):
         self._scale_selector = self.register_component(ScaleComponent(self._control_surface))
@@ -170,7 +172,8 @@ class StepSequencerComponent(CompoundComponent):
         self._scale_selector._mode = "chromatic"
         self._scale_selector._drumrack = False
         self._scale_selector_button = None
-        self.set_scale_selector_button(self._side_buttons[0]) 
+        # Moved scale selector button from 0 to 4
+        self.set_scale_selector_button(self._side_buttons[4])
             
     def set_osd(self, osd):
         self._osd = osd
@@ -434,6 +437,8 @@ class StepSequencerComponent(CompoundComponent):
         self._update_scale_selector_button()
         self._update_left_button()
         self._update_right_button()
+        if self._track_controller != None:
+            self._track_controller.update()
 
 
 # CLIP CALLBACKS

@@ -441,7 +441,7 @@ class TrackControllerComponent(MixerComponent):
 					self._session_record_button.turn_off()
 
 			if self._start_stop_button != None:
-				self._start_stop_button.set_on_off_values("TrackController.Stop.On", "TrackController.Stop.Off")
+				self._start_stop_button.set_on_off_values("TrackController.Stop")
 				self._start_stop_button.turn_off()
 			
 			if self._mute_button != None:

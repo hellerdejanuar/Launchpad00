@@ -756,6 +756,13 @@ class StepSequencerComponent2(StepSequencerComponent):
 		self._track_controller.set_next_scene_button(self._top_buttons[1])
 		self._track_controller.set_prev_track_button(self._top_buttons[2])
 		self._track_controller.set_next_track_button(self._top_buttons[3])
+		# Add play/stop functionality to first side button (was scale button)
+		self._track_controller.set_start_stop_button(self._side_buttons[0])
+		
+	def _update_track_controller(self):
+		if self._track_controller != None:
+			self._track_controller.set_enabled(True)
+			self._track_controller.update()
 
 	def _set_note_editor(self):
 		self._note_editor = self.register_component(MelodicNoteEditorComponent(self, self._matrix, self._side_buttons, self._control_surface))
@@ -780,6 +787,8 @@ class StepSequencerComponent2(StepSequencerComponent):
 		self._update_scale_selector_button()
 		self._update_left_button()
 		self._update_right_button()
+		if self._track_controller != None:
+			self._track_controller.update()
 
 	def _update_drum_group_device(self):
 		# no drum rack mode for me. i am a melodic step seq.
