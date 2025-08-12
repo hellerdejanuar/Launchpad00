@@ -76,21 +76,22 @@ class MelodicNoteEditorComponent(ControlSurfaceComponent):
 		self._mode = STEPSEQ_MODE_NOTES
 
 		# buttons
+		# Removed random button functionality from button 3
 		self._random_button = None
-		self.set_random_button(self._side_buttons[3])
-
+		
+		# Removed lengths button functionality from button 4
 		self._mode_notes_lengths_button = None
-		self.set_mode_notes_lengths_button(self._side_buttons[4])
 		self._is_notes_lengths_shifted = False
 		self._last_notes_lengths_button_press = time.time()
 
+		# Removed octaves button functionality from button 5
 		self._mode_notes_octaves_button = None
-		self.set_mode_notes_octaves_button(self._side_buttons[5])
 		self._is_octave_shifted = False
 		self._last_notes_octaves_button_press = time.time()
 
+		# Moved velocities button functionality to button 5 (was on button 6)
 		self._mode_notes_velocities_button = None
-		self.set_mode_notes_velocities_button(self._side_buttons[6])
+		self.set_mode_notes_velocities_button(self._side_buttons[5])
 		self._is_notes_velocity_shifted = False
 		self._last_notes_velocity_button_press = time.time()
 
@@ -747,7 +748,7 @@ class StepSequencerComponent2(StepSequencerComponent):
 		
 	def _set_scale_selector(self):
 		super(StepSequencerComponent2, self)._set_scale_selector()
-		self._scale_selector._mode = "diatonic"
+		self._scale_selector._mode = "chromatic"
 		self._scale_selector._drumrack = False
 
 	def _set_track_controller(self):

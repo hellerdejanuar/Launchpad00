@@ -418,7 +418,7 @@ class Colors:
 
         class Velocity:
             On = Rgb.AMBER
-            Dim = Rgb.AMBER_THIRD
+            Dim = Rgb.AMBER_HALF
             Off = Rgb.BLACK
 
         class Length:
@@ -451,8 +451,8 @@ class Colors:
             Off = Rgb.RED_THIRD
 
         class Play:
-            On = Rgb.RED
-            Off = Rgb.RED_THIRD
+            On = Rgb.GREEN
+            Off = Rgb.GREEN_HALF
 		
         class Lock:
             On = Rgb.RED
