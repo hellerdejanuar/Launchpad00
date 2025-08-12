@@ -446,10 +446,14 @@ class TrackControllerComponent(MixerComponent):
 			
 			if self._mute_button != None:
 				self._mute_button.set_on_off_values("TrackController.Mute")
-				if(self.selected_track.mute):
+				try:
+					if self.selected_track and hasattr(self.selected_track, 'mute') and self.selected_track.mute:
+						self._mute_button.turn_off()
+					else:
+						self._mute_button.turn_on()
+				except Exception as e:
+					# Safely handle any errors during reload
 					self._mute_button.turn_off()
-				else:
-					self._mute_button.turn_on()
 
 			if self._undo_button != None:
 				self._undo_button.set_on_off_values("TrackController.Undo")
@@ -460,9 +464,13 @@ class TrackControllerComponent(MixerComponent):
 
 			if self._solo_button != None:
 				self._solo_button.set_on_off_values("TrackController.Solo")
-				if self.selected_track.solo:
-					self._solo_button.turn_on()
-				else:
+				try:
+					if self.selected_track and hasattr(self.selected_track, 'solo') and self.selected_track.solo:
+						self._solo_button.turn_on()
+					else:
+						self._solo_button.turn_off()
+				except Exception as e:
+					# Safely handle any errors during reload
 					self._solo_button.turn_off()
 
 			if self._arm_button != None:
@@ -471,9 +479,13 @@ class TrackControllerComponent(MixerComponent):
 				else:
 					self._arm_button.set_on_off_values("TrackController.Recording")
 
-				if(self.selected_track.can_be_armed and self.selected_track.arm):
-					self._arm_button.turn_on()
-				else:
+				try:
+					if self.selected_track and hasattr(self.selected_track, 'can_be_armed') and self.selected_track.can_be_armed and self.selected_track.arm:
+						self._arm_button.turn_on()
+					else:
+						self._arm_button.turn_off()
+				except Exception as e:
+					# Safely handle any errors during reload
 					self._arm_button.turn_off()
 
 		MixerComponent.update(self)
