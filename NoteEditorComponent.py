@@ -164,7 +164,8 @@ class NoteEditorComponent(ControlSurfaceComponent):
 			self._grid_back_buffer[self._page % self.width][i] = "StepSequencer.NoteEditor.PageMarker"
 		
 	# Displays 3 buttons for the root of the scale and 1 for the in scale notes 	
-	def _display_note_markers(self):# (out of scale notes buttons are dark) OK
+	def _display_note_markers(self):
+		# (out of scale notes buttons are dark) OK
 		for i in range(0, int(self.height / self.number_of_lines_per_note)):
 			if self._key_index_is_root_note[i]:
 				for j in range(0, self.number_of_lines_per_note):
@@ -174,7 +175,6 @@ class NoteEditorComponent(ControlSurfaceComponent):
 			elif self._key_index_is_in_scale[i]:
 				for j in range(0, self.number_of_lines_per_note):
 					self._grid_back_buffer[0][self.height - i * self.number_of_lines_per_note - j - 1] = "StepSequencer.NoteEditor.NoteMarker"
-
 
 
 #*********************MATRIX*********************

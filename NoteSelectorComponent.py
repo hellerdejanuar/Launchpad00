@@ -25,7 +25,7 @@ class NoteSelectorComponent(ControlSurfaceComponent):
         self._up_button = None
         self._down_button = None
 
-        self._offset_buttons = offset_buttons
+        self._offset_buttons = []
         self._enable_offset_button = True # self._mode == STEPSEQ_MODE_NORMAL
         # cache to optimize display for offset buttons minimizing MIDI traffic
         self._cache = [-1, -1, -1, -1,

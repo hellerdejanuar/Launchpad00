@@ -24,8 +24,8 @@ class Settings():
 		# ,"user 1"
     ]
     USER_MODES_2 = [
-		# "drum stepseq",
-		"melodic stepseq"
+		"drum stepseq"
+		# ,"melodic stepseq"
 		# ,"user 2"
     ]
 
