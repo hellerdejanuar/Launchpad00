@@ -19,7 +19,8 @@ class NoteEditorComponent(ControlSurfaceComponent):
 		
 		# playback page indicator
 		self._current_page = -1
-
+		# Normal Color map.
+		self.lanes_color_map = "StepSequencer.NoteEditor.LanesColorMap"
 		# Velocity color map. this must remain of length 3. WHY???
 		self.velocity_map = [20, 50, 80, 105, 127]
 		self.velocity_color_map = [	"StepSequencer.NoteEditor.Velocity0", "StepSequencer.NoteEditor.Velocity1", "StepSequencer.NoteEditor.Velocity2", "StepSequencer.NoteEditor.Velocity3", "StepSequencer.NoteEditor.Velocity4"]
@@ -41,6 +42,8 @@ class NoteEditorComponent(ControlSurfaceComponent):
 		self._page = 0
 		self._display_page = False
 		self._display_page_time = time.time()
+		# displayed Bank
+		self._selected_bank = "A"
 
 		# notes
 		self._key_indexes = [36, 37, 38, 39, 40, 41, 42, 43]
@@ -64,6 +67,7 @@ class NoteEditorComponent(ControlSurfaceComponent):
 		# modes
 		self._is_mute_shifted = False
 		self._is_mutlinote = False
+		self._velocity_mode_active = False
 				
 		# matrix
 		if matrix != None:
@@ -164,19 +168,15 @@ class NoteEditorComponent(ControlSurfaceComponent):
 			self._grid_back_buffer[self._page % self.width][i] = "StepSequencer.NoteEditor.PageMarker"
 		
 	# Displays 3 buttons for the root of the scale and 1 for the in scale notes 	
-	def _display_note_markers(self):
+	def _display_note_markers(self, selected_bank="B"):
 		# (out of scale notes buttons are dark) OK
-		for i in range(0, int(self.height / self.number_of_lines_per_note)):
-			if self._key_index_is_root_note[i]:
-				for j in range(0, self.number_of_lines_per_note):
-					self._grid_back_buffer[0][self.height - i * self.number_of_lines_per_note - j - 1] = "StepSequencer.NoteEditor.NoteMarker"
-					self._grid_back_buffer[1][self.height - i * self.number_of_lines_per_note - j - 1] = "StepSequencer.NoteEditor.NoteMarker"
-					self._grid_back_buffer[2][self.height - i * self.number_of_lines_per_note - j - 1] = "StepSequencer.NoteEditor.NoteMarker"
-			elif self._key_index_is_in_scale[i]:
-				for j in range(0, self.number_of_lines_per_note):
-					self._grid_back_buffer[0][self.height - i * self.number_of_lines_per_note - j - 1] = "StepSequencer.NoteEditor.NoteMarker"
 
-
+		# for i in range(0, int(self.height / self.number_of_lines_per_note)):
+		# # 	NoteBackground = f"NoteBackground_{selected_bank}{i % 4}"
+		# 	# selected_bank_background = f"{selected_bank}{i % 4}"
+		# 	for j in range(0, self.width):
+		# 		self._grid_back_buffer[j][i] = f"StepSequencer.NoteEditor.NoteBackground_{selected_bank}"
+		pass
 #*********************MATRIX*********************
 	
 	#Add listener and initialize note buffers OK
@@ -198,7 +198,8 @@ class NoteEditorComponent(ControlSurfaceComponent):
 	def _update_matrix(self):  
 		if self.is_enabled() and self._matrix!=None:
 			
-			# clear back buffer
+
+			# clear back buffer. BACKGROUND COLOR <--
 			for x in range(self.width):
 				for y in range(self.height):
 					self._grid_back_buffer[x][y] = "DefaultButton.Disabled"
@@ -206,7 +207,7 @@ class NoteEditorComponent(ControlSurfaceComponent):
 			# update back buffer
 			if self._clip != None and self._note_cache != None:
 
-				# play back position
+				# playback position
 				if self._playhead != None:
 					play_position = self._playhead  # position in beats (integer = number of beats, decimal subdivisions)
 					play_page = int(play_position / self.quantization / self.width / self.number_of_lines_per_note)
@@ -234,7 +235,7 @@ class NoteEditorComponent(ControlSurfaceComponent):
 
 				# Display the notes in the 1st left column 
 				if self.is_multinote:
-					self._display_note_markers()
+					# self._display_note_markers()
 					# Display the current played page
 					if(self._current_page !=play_page):
 						self._current_page=play_page
@@ -285,21 +286,52 @@ class NoteEditorComponent(ControlSurfaceComponent):
 				
 					#Set note color
 					if (note_grid_x_position >= 0):
-						# compute colors
-						velocity_color = self.velocity_color_map[0]
-						for index in range(len(self.velocity_map)):
-							if note_velocity >= self.velocity_map[index]:
-								velocity_color = self.velocity_color_map[index]
-						# highligh playing notes in red. even if they are from other pages.
-						if not note_muted and note_page == play_page and play_x_position == note_grid_x_position and (play_y_position == note_grid_y_position and not self.is_multinote or self.is_multinote and note_grid_y_offset == play_row) and self.song().is_playing and self._clip.is_playing:
-							self._grid_back_buffer[note_grid_x_position][note_grid_y_position] = self.playing_note_color
-						elif note_page == self._page:  # if note is in current page, then update grid
-							# do not erase current note highlight
-							if self._grid_back_buffer[note_grid_x_position][note_grid_y_position] != self.playing_note_color:
-								if note_muted:
-									self._grid_back_buffer[note_grid_x_position][note_grid_y_position] = self.muted_note_color
-								else:
-									self._grid_back_buffer[note_grid_x_position][note_grid_y_position] = velocity_color
+						if self._velocity_mode_active == True: # velocity mode active
+							# compute Velocity colors
+							velocity_color = self.velocity_color_map[0]
+							for index in range(len(self.velocity_map)):
+								if note_velocity >= self.velocity_map[index]:
+									velocity_color = self.velocity_color_map[index]
+							# highligh playing notes in <playing_note_color>. even if they are from other pages.
+							if  not note_muted \
+									and note_page == play_page \
+							    and play_x_position == note_grid_x_position  \
+									and (play_y_position == note_grid_y_position  \
+										and not self.is_multinote or self.is_multinote  \
+										and note_grid_y_offset == play_row)  \
+									and self.song().is_playing  \
+									and self._clip.is_playing:
+								self._grid_back_buffer[note_grid_x_position][note_grid_y_position] = self.playing_note_color
+							elif note_page == self._page:  # if note is in current page, then update grid
+								# do not erase current note highlight
+								if self._grid_back_buffer[note_grid_x_position][note_grid_y_position] != self.playing_note_color:
+									if note_muted:
+										self._grid_back_buffer[note_grid_x_position][note_grid_y_position] = self.muted_note_color
+									else:
+										self._grid_back_buffer[note_grid_x_position][note_grid_y_position] = velocity_color
+
+						elif self._velocity_mode_active == False: # velocity mode inactive
+							lane = note_grid_y_position % 4
+							lane_color = self.lanes_color_map+f".{self._selected_bank}{lane}"
+							# highligh playing notes in <playing_note_color>. even if they are from other pages.
+							if  not note_muted \
+									and note_page == play_page \
+									and play_x_position == note_grid_x_position  \
+									and (play_y_position == note_grid_y_position  \
+										and not self.is_multinote \
+										or self.is_multinote and note_grid_y_offset == play_row)  \
+									and self.song().is_playing  \
+									and self._clip.is_playing:
+								self._grid_back_buffer[note_grid_x_position][note_grid_y_position] = self.playing_note_color
+
+							elif note_page == self._page:  # if note is in current page, then update grid
+								# do not erase current note highlight
+								if self._grid_back_buffer[note_grid_x_position][note_grid_y_position] != self.playing_note_color:
+									if note_muted:
+										self._grid_back_buffer[note_grid_x_position][note_grid_y_position] = self.muted_note_color
+									else:
+										self._grid_back_buffer[note_grid_x_position][note_grid_y_position] = lane_color
+
 
 				#Display the column to show the page for half a second
 				if self._display_page:
@@ -421,9 +453,11 @@ class NoteEditorComponent(ControlSurfaceComponent):
 	def _velocity_value(self, value, sender): 
 		assert (self._velocity_button != None)
 		assert (value in range(128))
+
 		if self.is_enabled():
 			if ((value is 0) or (not sender.is_momentary())):
 				# button released, check if was used to modify notes or just to cycle thru velocity values
+
 				if self._velocity_notes_pressed == 0 and time.time() - self._velocity_last_press < self.long_button_press:
 					# cycle thru velocities
 					self._velocity_index = (len(self.velocity_map) + self._velocity_index + 1) % len(self.velocity_map)
@@ -432,16 +466,20 @@ class NoteEditorComponent(ControlSurfaceComponent):
 				if self._is_velocity_shifted:
 					self._stepsequencer._track_controller._do_implicit_arm(False)
 				self._is_velocity_shifted = False
+				self._velocity_mode_active = False
 				self._update_velocity_button()
+				self._update_matrix()
 			if ((value is not 0) or (not sender.is_momentary())):
 				# button pressed
 				self._velocity_notes_pressed = 0
 				self._is_velocity_shifted = True
-				#While velocity is pressed, can play sounds using notes region
+				self._velocity_mode_active = True
+				#While velocity is pressed, can play sounds using notes region-- Maybe a clash with velocity mode
 				self._stepsequencer._track_controller._implicit_arm = True #Arm the track to force play MIDI notes
 				self._stepsequencer._track_controller._do_implicit_arm(True)
 				self._velocity_last_press = time.time()
 				self._update_velocity_button()
+				self._update_matrix()
 			self._stepsequencer._note_selector.update()
 			
 #*********************MUTE/BTN_SHIFT*********************

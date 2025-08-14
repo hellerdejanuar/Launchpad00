@@ -32,7 +32,7 @@ class LoopSelectorComponent(ControlSurfaceComponent):
         self._cache = [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
                        -1, -1]  # Length=16
 
-        self._buttons = []
+        self._buttons = buttons
         for button in self._buttons:  # iterate 16 buttons of 4x4 lower right matrix section
             assert isinstance(button, ButtonElement)
             button.remove_value_listener(self._loop_button_value)

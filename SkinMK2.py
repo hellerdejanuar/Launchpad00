@@ -404,7 +404,7 @@ class Colors:
             Muted = Rgb.DARK_GREY
             Playing = Rgb.RED
             Metronome = Rgb.BLUE
-            NoteMarker = Rgb.AMBER
+            NoteMarker = Rgb.AMBER             
             PageMarker = Rgb.YELLOW
 
     class StepSequencer2:

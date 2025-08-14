@@ -388,20 +388,39 @@ class Colors:
             Playing = Rgb.RED
 
         class NoteEditor:
+            class LanesColorMap:
+                    def __call__(self,):
+                        return Rgb.RED
+                    
+                    A0 = Rgb.AMBER
+                    A1 = Rgb.ORANGE
+                    A2 = Rgb.MANDARIN
+                    A3 = Rgb.RED
+
+                    B0 = Rgb.AMBER 
+                    B1 = Rgb.YELLOW
+                    B2 = Rgb.LIME
+                    B3 = Rgb.GREEN
             class VelocityShifted:
+                
                 On = Rgb.AMBER
                 Off = Rgb.AMBER_THIRD
 
-            Velocity0 = Rgb.GREEN_THIRD
-            Velocity1 = Rgb.GREEN_HALF
-            Velocity2 = Rgb.GREEN
-            Velocity3 = Rgb.AMBER_HALF
-            Velocity4 = Rgb.AMBER
+            Velocity0 = Rgb.GREEN_HALF
+            Velocity1 = Rgb.LIME
+            Velocity2 = Rgb.YELLOW
+            Velocity3 = Rgb.AMBER
+            Velocity4 = Rgb.MANDARIN
+
             Muted = Rgb.RED_THIRD
-            Playing = Rgb.RED
+            Playing = Rgb.GREEN_FULL
             Metronome = Rgb.RED
             NoteMarker = Rgb.AMBER
-            PageMarker = Rgb.AMBER_THIRD
+            PageMarker = Rgb.ORANGE_HALF
+
+            BankBackground_A = Rgb.AMBER_THIRD
+            BankBackground_B = Rgb.GREEN_THIRD
+
             CurrentPageMarker = Rgb.RED_THIRD
             CurrentPageMarkerPlay = Rgb.GREEN_THIRD
 

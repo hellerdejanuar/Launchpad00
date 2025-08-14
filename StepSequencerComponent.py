@@ -97,7 +97,7 @@ class StepSequencerComponent(CompoundComponent):
 # SET FUNCTIONS
     def _set_mode_function(self): #Change the resolution of the sequencer
         self._mode_button = None
-        self.set_mode_button(self._side_buttons[5]) #SndB
+        # self.set_mode_button(self._side_buttons[5]) #SndB
         self._last_mode_button_press = time.time()
         self._number_of_lines_per_note = 1
 
@@ -136,7 +136,7 @@ class StepSequencerComponent(CompoundComponent):
     #Display page indicator for multinote mode    
     def _set_note_editor(self): 
         self._note_editor = self.register_component(NoteEditorComponent(self, self._matrix, self._control_surface))
-        self._note_editor.set_velocity_button(self._side_buttons[6])#Solo 
+        self._note_editor.set_velocity_button(self._side_buttons[5]) # Label: Trk On 
 
     #Set 4x4 lower left matrix section that allows note selection in Normal Mode
     def _set_note_selector(self):
@@ -285,7 +285,7 @@ class StepSequencerComponent(CompoundComponent):
 
             # todo: find a better way to init?
             if self._mode == -1:
-                self._mode = STEPSEQ_MODE_MULTINOTE
+                self._mode = STEPSEQ_MODE_MULTINOTE  # Default to multinote
                 self._detect_scale_mode()
 
             # sync to selected pad
