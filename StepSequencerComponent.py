@@ -62,7 +62,10 @@ class StepSequencerComponent(CompoundComponent):
         self._root_note = 36
         self._chromatic_scale = []
         self._diatonic_scale = []
-        
+
+        # displayed Bank
+        self._selected_subBank = "A"
+
         self._beat = 0
         # setup
         self._set_loop_selector()
@@ -144,8 +147,8 @@ class StepSequencerComponent(CompoundComponent):
             NoteSelectorComponent(self, [],
                                   self._control_surface)
             )
-        # self._note_selector.set_up_button(self._side_buttons[4])#Stop
-        # self._note_selector.set_down_button(self._side_buttons[5])#Trk On
+        self._note_selector.set_subBank_selector(self._side_buttons[3])#SndB
+        # self._note_selector.set_down_button(self._side_buttons[4])#Trk On
 
     def _set_track_controller(self):#Navigation buttons
         self._track_controller = self.register_component(TrackControllerComponent(self._control_surface, implicit_arm = False))

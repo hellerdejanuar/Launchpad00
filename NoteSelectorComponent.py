@@ -22,7 +22,7 @@ class NoteSelectorComponent(ControlSurfaceComponent):
         self._key = 0
         self._scale = [0, 2, 4, 5, 7, 9, 11, 12]#Major
         self._force = True
-        self._up_button = None
+        self._subBank_selector = None
         self._down_button = None
 
         self._offset_buttons = []
@@ -74,90 +74,98 @@ class NoteSelectorComponent(ControlSurfaceComponent):
 
 
     # Updates the DOWN button light OK
-    def _update_down_button(self):
-        if self.is_enabled():
-            if self._down_button != None:
-                if self._clip == None:
-                    self._down_button.set_on_off_values("DefaultButton.Disabled", "DefaultButton.Disabled")
-                    self._down_button.turn_off()
-                else:
-                    self._down_button.set_on_off_values("StepSequencer.Octave.On", "StepSequencer.Octave.Off")
-                    if self.should_scroll():
-                        if self.can_scroll_down():
-                            self._down_button.turn_on()
-                        else:
-                            self._down_button.turn_off()
-                    else:
-                        if self.can_page_down():
-                            self._down_button.turn_on()
-                        else:
-                            self._down_button.turn_off()
+    # def _update_down_button(self):
+    #     if self.is_enabled():
+    #         if self._down_button != None:
+    #             if self._clip == None:
+    #                 self._down_button.set_on_off_values("DefaultButton.Disabled", "DefaultButton.Disabled")
+    #                 self._down_button.turn_off()
+    #             else:
+    #                 self._down_button.set_on_off_values("StepSequencer.Octave.On", "StepSequencer.Octave.Off")
+    #                 if self.should_change_bank():
+    #                     if self.can_bank_down():
+    #                         self._down_button.turn_on()
+    #                     else:
+    #                         self._down_button.turn_off()
+    #                 else:
+    #                     if self.can_page_down():
+    #                         self._down_button.turn_on()
+    #                     else:
+    #                         self._down_button.turn_off()
 
-    # Refresh button and its listener OK
-    def set_down_button(self, button):
-        assert (isinstance(button, (ButtonElement, type(None))))
-        if (self._down_button != button):
-            if (self._down_button != None):
-                self._down_button.remove_value_listener(self._down_button_value)
-            self._down_button = button
-            if (self._down_button != None):
-                assert isinstance(button, ButtonElement)
-                self._down_button.add_value_listener(self._down_button_value, identify_sender=True)
-            self._update_down_button()
+    # # Refresh button and its listener OK
+    # def set_down_button(self, button):
+    #     assert (isinstance(button, (ButtonElement, type(None))))
+    #     if (self._down_button != button):
+    #         if (self._down_button != None):
+    #             self._down_button.remove_value_listener(self._down_button_value)
+    #         self._down_button = button
+    #         if (self._down_button != None):
+    #             assert isinstance(button, ButtonElement)
+    #             self._down_button.add_value_listener(self._down_button_value, identify_sender=True)
+    #         self._update_down_button()
 
-    # Handle page and scroll displacement in down direction
-    def _down_button_value(self, value, sender):
-        assert (self._down_button != None)
-        assert (value in range(128))
-        if self.is_enabled() and self._clip != None:
-            if value is not 0 or not sender.is_momentary():
-                if self.should_scroll():
-                    self.scroll_down()
-                else:
-                    self.page_down()
-                self._step_sequencer.update()
+    # # Handle page and scroll displacement in down direction
+    # def _down_button_value(self, value, sender):
+    #     assert (self._down_button != None)
+    #     assert (value in range(128))
+    #     if self.is_enabled() and self._clip != None:
+    #         if value is not 0 or not sender.is_momentary():
+    #             if self.should_change_bank():
+    #                 self.bank_down()
+    #             else:
+    #                 self.page_down()
+    #             self._step_sequencer.update()
 
     # Updates the UP button light OK
-    def _update_up_button(self):
+    def _update_subBank_selector(self):
         if self.is_enabled():
-            if self._up_button != None:
+            if self._subBank_selector != None:
                 if self._clip == None:
-                    self._up_button.set_on_off_values("DefaultButton.Disabled", "DefaultButton.Disabled")
-                    self._up_button.turn_off()
+                    self._subBank_selector.set_on_off_values("DefaultButton.Disabled", "DefaultButton.Disabled")
+                    self._subBank_selector.turn_off()
                 else:
-                    self._up_button.set_on_off_values("StepSequencer.Octave.On", "StepSequencer.Octave.Off")
-                    if self.should_scroll():
-                        if self.can_scroll_up():
-                            self._up_button.turn_on()
+                    self._subBank_selector.set_on_off_values("StepSequencer.SubBankSelector.A", "StepSequencer.SubBankSelector.B")
+                    if self.should_change_bank():
+                        if self._step_sequencer._selected_subBank == "A":
+                            self._subBank_selector.turn_on()
+                        elif self._step_sequencer._selected_subBank == "B":
+                            self._subBank_selector.turn_off()
                         else:
-                            self._up_button.turn_off()
+                            self._subBank_selector.turn_off()
                     else:
                         if self.can_page_up():
-                            self._up_button.turn_on()
+                            self._subBank_selector.turn_on()
                         else:
-                            self._up_button.turn_off()
+                            self._subBank_selector.turn_off()
 
     # Refresh button and its listener OK
-    def set_up_button(self, button):
+    def set_subBank_selector(self, button):
         assert (isinstance(button, (ButtonElement, type(None))))
-        if self._up_button != button:
-            if self._up_button != None:
-                self._up_button.remove_value_listener(self._up_button_value)
-            self._up_button = button
-            if self._up_button != None:
+        if self._subBank_selector != button:
+            if self._subBank_selector != None:
+                self._subBank_selector.remove_value_listener(self._subBank_selector_value)
+            self._subBank_selector = button
+            if self._subBank_selector != None:
                 assert isinstance(button, ButtonElement)
-                self._up_button.add_value_listener(self._up_button_value, identify_sender=True)
-            self._update_up_button()
+                self._subBank_selector.add_value_listener(self._subBank_selector_value, identify_sender=True)
+            self._update_subBank_selector()
 
     # Handle page and scroll displacement in up direction
-    def _up_button_value(self, value, sender):
-        assert (self._up_button != None)
+    def _subBank_selector_value(self, value, sender):
+        assert (self._subBank_selector != None)
         assert (value in range(128))
         if self.is_enabled() and self._clip != None:
             if value is not 0 or not sender.is_momentary(): #If NOTEON or is Toggle
                 #IF [mute_shift and NormalMode-> move(1)] [not mute_shift and MultinoteMode-> move(1)] ELSE move(12|16)_dependingIfdrumRack
-                if self.should_scroll():
-                    self.scroll_up()
+                if self.should_change_bank():
+                    if self._step_sequencer._selected_subBank == "A":
+                        self.bank_up()
+                        self._step_sequencer._selected_subBank = "B"
+
+                    else:
+                        self._step_sequencer._selected_subBank = "A"
+                        self.bank_down()
                 else:
                     self.page_up()
                 self._step_sequencer.update()
@@ -193,7 +201,7 @@ class NoteSelectorComponent(ControlSurfaceComponent):
                 self._was_velocity_shifted = False
                 self._offset = self._drum_group_device.view.selected_drum_pad.note - self._root_note
                 self._step_sequencer._scale_updated()
-            self._update_up_button()
+            self._update_subBank_selector()
             self._update_down_button()
             self._update_matrix()
 
@@ -273,11 +281,11 @@ class NoteSelectorComponent(ControlSurfaceComponent):
                     return True
         return False
 
-    def scroll_down(self):
-        self.move(-1)
+    def bank_down(self):
+        self.move(-4)
 
-    def scroll_up(self):
-        self.move(1)
+    def bank_up(self):
+        self.move(4)
 
     def page_down(self):
         if self.is_drumrack:
@@ -291,11 +299,11 @@ class NoteSelectorComponent(ControlSurfaceComponent):
         else:
             self.move(12)
 
-    def can_scroll_down(self):
-        return self.can_move(-1)
+    def can_bank_down(self):
+        return self.can_move(-4)
 
-    def can_scroll_up(self):
-        return self.can_move(1)
+    def can_bank_up(self):
+        return self.can_move(4)
 
     def can_page_down(self):
         if self.is_drumrack:
@@ -382,7 +390,7 @@ class NoteSelectorComponent(ControlSurfaceComponent):
     def selected_note(self):
         return self._root_note + self._offset
 
-    def should_scroll(self):
+    def should_change_bank(self):
         return not self._is_mute_shifted and not self._enable_offset_button or self._is_mute_shifted and self._enable_offset_button
     #Used in Normal mode (Not Multinote) to delete/copy/mute/change loops regions
 

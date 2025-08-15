@@ -343,6 +343,10 @@ class Colors:
         class Octave:
             On = Rgb.RED
             Off = Rgb.RED_THIRD
+            
+        class SubBankSelector:
+            A = Rgb.GREEN
+            B = Rgb.RED
 
         class Mute:
             On = Rgb.RED

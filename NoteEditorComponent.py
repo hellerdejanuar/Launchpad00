@@ -42,8 +42,7 @@ class NoteEditorComponent(ControlSurfaceComponent):
 		self._page = 0
 		self._display_page = False
 		self._display_page_time = time.time()
-		# displayed Bank
-		self._selected_bank = "A"
+
 
 		# notes
 		self._key_indexes = [36, 37, 38, 39, 40, 41, 42, 43]
@@ -78,6 +77,7 @@ class NoteEditorComponent(ControlSurfaceComponent):
 		self._velocity_button = None
 		self._clip = None
 			
+
 	@property
 	def is_multinote(self):
 		return self._is_mutlinote
@@ -168,14 +168,14 @@ class NoteEditorComponent(ControlSurfaceComponent):
 			self._grid_back_buffer[self._page % self.width][i] = "StepSequencer.NoteEditor.PageMarker"
 		
 	# Displays 3 buttons for the root of the scale and 1 for the in scale notes 	
-	def _display_note_markers(self, selected_bank="B"):
+	def _display_note_markers(self, selected_subBank="B"):
 		# (out of scale notes buttons are dark) OK
 
 		# for i in range(0, int(self.height / self.number_of_lines_per_note)):
-		# # 	NoteBackground = f"NoteBackground_{selected_bank}{i % 4}"
-		# 	# selected_bank_background = f"{selected_bank}{i % 4}"
+		# # 	NoteBackground = f"NoteBackground_{selected_subBank}{i % 4}"
+		# 	# selected_subBank_background = f"{selected_subBank}{i % 4}"
 		# 	for j in range(0, self.width):
-		# 		self._grid_back_buffer[j][i] = f"StepSequencer.NoteEditor.NoteBackground_{selected_bank}"
+		# 		self._grid_back_buffer[j][i] = f"StepSequencer.NoteEditor.NoteBackground_{selected_subBank}"
 		pass
 #*********************MATRIX*********************
 	
@@ -312,7 +312,7 @@ class NoteEditorComponent(ControlSurfaceComponent):
 
 						elif self._velocity_mode_active == False: # velocity mode inactive
 							lane = note_grid_y_position % 4
-							lane_color = self.lanes_color_map+f".{self._selected_bank}{lane}"
+							lane_color = self.lanes_color_map+f".{self._stepsequencer._selected_subBank}{lane}"
 							# highligh playing notes in <playing_note_color>. even if they are from other pages.
 							if  not note_muted \
 									and note_page == play_page \
