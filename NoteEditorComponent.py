@@ -1,7 +1,7 @@
 from _Framework.ControlSurfaceComponent import ControlSurfaceComponent
 from _Framework.ButtonElement import ButtonElement
 import time
-
+from .Log import log
 class NoteEditorComponent(ControlSurfaceComponent):
 
 	def __init__(self, stepsequencer = None, matrix = None, control_surface = None):
@@ -235,11 +235,14 @@ class NoteEditorComponent(ControlSurfaceComponent):
 
 				# Display the notes in the 1st left column 
 				if self.is_multinote:
+					log("is_multinote")
 					# self._display_note_markers()
 					# Display the current played page
 					if(self._current_page !=play_page):
 						self._current_page=play_page
 						self._display_current_page()
+				else:
+					log("not is_multinote")
 
 				# display clip notes
 				for note in self._note_cache:
