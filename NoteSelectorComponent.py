@@ -202,7 +202,7 @@ class NoteSelectorComponent(ControlSurfaceComponent):
                 self._offset = self._drum_group_device.view.selected_drum_pad.note - self._root_note
                 self._step_sequencer._scale_updated()
             self._update_subBank_selector()
-            self._update_down_button()
+            # self._update_down_button()
             self._update_matrix()
 
     def _update_matrix(self):
