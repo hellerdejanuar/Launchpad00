@@ -14,7 +14,7 @@ class NoteEditorComponent(ControlSurfaceComponent):
 		self._playhead = None
 
 		# playback step indicator
-		self.display_metronome = True
+		self.display_metronome = False
 		self.metronome_color = "StepSequencer.NoteEditor.Metronome"
 		
 		# playback page indicator
@@ -68,6 +68,11 @@ class NoteEditorComponent(ControlSurfaceComponent):
 		self._is_mutlinote = False
 		self._velocity_mode_active = False
 				
+		if (self.is_multinote):
+			log("is_multinote")	
+		else:
+			log("not is_multinote")
+			
 		# matrix
 		if matrix != None:
 			self.set_matrix(matrix)
@@ -224,7 +229,7 @@ class NoteEditorComponent(ControlSurfaceComponent):
 				if(self.display_metronome):
 					if self._clip.is_playing and self.song().is_playing:
 						self._grid_back_buffer[play_x_position][play_y_position] = "StepSequencer.NoteEditor.Metronome"
-
+ 
 				# Display the selected page
 				if(self._display_page):
 					self._display_selected_page()
@@ -235,14 +240,12 @@ class NoteEditorComponent(ControlSurfaceComponent):
 
 				# Display the notes in the 1st left column 
 				if self.is_multinote:
-					log("is_multinote")
 					# self._display_note_markers()
 					# Display the current played page
 					if(self._current_page !=play_page):
 						self._current_page=play_page
 						self._display_current_page()
-				else:
-					log("not is_multinote")
+
 
 				# display clip notes
 				for note in self._note_cache:
