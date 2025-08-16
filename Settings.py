@@ -48,7 +48,7 @@ class Settings():
 
 
     # Logging feature for debugging (creates C:/Users/{USERNAME}/Documents/Ableton/User Library/Remote Scripts/log.txt)
-    LOGGING = False
+    LOGGING = True
 
     # Map buttons to levels in volume slider. Exactly 7 values must be provided.
     # The lowest button is always set to -inf. Lowest supported value is -69 dB.
