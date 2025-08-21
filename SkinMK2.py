@@ -1,5 +1,5 @@
 from _Framework.Skin import Skin
-from .ColorsMK2 import Rgb
+from .ColorsMK1 import Rgb
 
 
 class Colors:
@@ -10,86 +10,85 @@ class Colors:
 
     class Mode:  # mode buttons colour
         class Session:
-            On = Rgb.GREEN
-            Off = Rgb.GREEN_THIRD
-
-        class ProSession:
-            On = Rgb.MINT
-            Off = Rgb.MINT_THIRD
-
-        class Note:
-            On = Rgb.LIGHT_BLUE
-            Off = Rgb.LIGHT_BLUE_THIRD
-
-        class Drum:
-            On = Rgb.YELLOW
-            Off = Rgb.YELLOW_HALF
-
-        class Device:
-            On = Rgb.PURPLE
-            Off = Rgb.PURPLE_THIRD
-
-        class StepSequencer:
-            On = Rgb.PINK
-            Off = Rgb.PINK_THIRD
-
-        class StepSequencer2:
             On = Rgb.AMBER
             Off = Rgb.AMBER_THIRD
 
+        class ProSession:
+            On = Rgb.RED
+            Off = Rgb.RED_HALF
+
+        class Note:
+            On = Rgb.AMBER
+            Off = Rgb.AMBER_THIRD
+
+        class Drum:
+            On = Rgb.AMBER
+            Off = Rgb.AMBER_THIRD
+
+        class Device:
+            On = Rgb.RED
+            Off = Rgb.RED_THIRD
+
+        class StepSequencer:
+            On = Rgb.AMBER
+            Off = Rgb.AMBER_THIRD
+
+        class StepSequencer2:
+            On = Rgb.RED
+            Off = Rgb.RED_THIRD
+
         class User:
-            On = Rgb.BLUE
-            Off = Rgb.BLUE_THIRD
+            On = Rgb.GREEN
+            Off = Rgb.GREEN_THIRD
 
         class User2:
-            On = Rgb.BLUE
-            Off = Rgb.BLUE_THIRD
+            On = Rgb.GREEN
+            Off = Rgb.GREEN_THIRD
 
         class Mixer:
-            On = Rgb.MINT
-            Off = Rgb.MINT_THIRD
+            On = Rgb.AMBER
+            Off = Rgb.AMBER_THIRD
 
-        class Track:  # used in device component
-            On = Rgb.MINT
-            Off = Rgb.MINT_THIRD
+        class Track:
+            On = Rgb.ORANGE
+            Off = Rgb.ORANGE_HALF
 
     class Session:
         # scene
         SceneTriggered = Rgb.GREEN_BLINK
-        Scene = Rgb.GREEN
+        Scene = Rgb.AMBER_THIRD
         NoScene = Rgb.BLACK
         # clip states
-        ClipStarted = Rgb.GREEN_PULSE
-        ClipStopped = Rgb.RED_THIRD
-        ClipRecording = Rgb.RED_PULSE
+        ClipStarted = Rgb.GREEN
+        ClipStopped = Rgb.AMBER
+        ClipRecording = Rgb.RED
         ClipEmpty = Rgb.BLACK
         # trigs
         ClipTriggeredPlay = Rgb.GREEN_BLINK
         ClipTriggeredRecord = Rgb.RED_BLINK
         RecordButton = Rgb.RED_THIRD
         # stop button
-        StopClip = Rgb.GREY
-        StopClipTriggered = Rgb.GREY_BLINK
-
+        StopClip = Rgb.ORANGE_HALF
+        StopClipTriggered = Rgb.ORANGE_BLINK_HALF
     # Enabled = Rgb.GREEN
     # Off = Rgb.GREEN_THIRD
 
     class ProSession:  # session zoomin
         On = Rgb.GREEN
         Off = Rgb.GREEN_THIRD
-        ClipStarted = Rgb.GREEN_PULSE
+        ClipStarted = Rgb.GREEN
         ClipTriggeredPlay = Rgb.GREEN_BLINK
-        ClipStopped = Rgb.RED_THIRD
+        ClipStopped = Rgb.AMBER
         ClipFoldedTrack = Rgb.AMBER
         ClipUnFoldedTrack = Rgb.AMBER_HALF
 
         class Shift:
-            On = Rgb.WHITE
-            Off = Rgb.DARK_GREY
+            On = Rgb.GREEN
+            Off = Rgb.GREEN_THIRD
 
         class Click:
-            On = Rgb.BLUE
-            Off = Rgb.BLUE_THIRD
+            On = Rgb.AMBER_BLINK
+            Off = Rgb.AMBER
 
         class Undo:
             On = Rgb.GREEN
@@ -100,24 +99,24 @@ class Colors:
             Off = Rgb.RED_HALF
 
         class Duplicate:
-            On = Rgb.BLUE_HALF
-            Off = Rgb.BLUE
+            On = Rgb.GREEN
+            Off = Rgb.GREEN_THIRD
 
         class Double:
-            On = Rgb.PURPLE
-            Off = Rgb.PURPLE_THIRD
+            On = Rgb.GREEN
+            Off = Rgb.GREEN_THIRD
 
         class Quantize:
-            On = Rgb.AMBER
-            Off = Rgb.AMBER_THIRD
+            On = Rgb.GREEN
+            Off = Rgb.GREEN_THIRD
 
         class SessionRec:
-            On = Rgb.RED
+            On = Rgb.RED_FULL
             Off = Rgb.RED_THIRD
 
         class SessionRecMode:
             On = Rgb.RED_BLINK
-            Off = Rgb.RED_THIRD_BLINK
+            Off = Rgb.RED_BLINK_THIRD
 
     class LaunchQuant:
         On = Rgb.GREEN
@@ -129,9 +128,9 @@ class Colors:
             Off = Rgb.AMBER_THIRD
 
         class Value:
-            On = Rgb.YELLOW
-            Idle = Rgb.YELLOW_HALF
-            Off = Rgb.YELLOW_THIRD
+            On = Rgb.MANDARIN_BLINK
+            Idle = Rgb.MANDARIN
+            Off = Rgb.ORANGE_HALF
 
     class FixedLength:
         On = Rgb.GREEN
@@ -143,9 +142,9 @@ class Colors:
             Off = Rgb.AMBER_THIRD
 
         class Value:
-            On = Rgb.YELLOW
-            Idle = Rgb.YELLOW_HALF
-            Off = Rgb.YELLOW_THIRD
+            On = Rgb.AMBER
+            Idle = Rgb.AMBER_HALF
+            Off = Rgb.AMBER_THIRD
 
     class Metronome:
         On = Rgb.GREEN
@@ -164,9 +163,9 @@ class Colors:
             Off = Rgb.AMBER_THIRD
 
         class Value:
-            On = Rgb.YELLOW
-            Idle = Rgb.YELLOW_HALF
-            Off = Rgb.YELLOW_THIRD
+            On = Rgb.ORANGE_BLINK
+            Idle = Rgb.ORANGE
+            Off = Rgb.ORANGE_HALF
 
     class Zooming:  # session zoomin
         Selected = Rgb.AMBER
@@ -180,160 +179,157 @@ class Colors:
             Off = Rgb.RED_THIRD
 
         class Solo:
-            On = Rgb.BLUE
-            Off = Rgb.BLUE_THIRD
+            On = Rgb.RED
+            Off = Rgb.RED_THIRD
 
         class Mute:
-            On = Rgb.YELLOW_THIRD
-            Off = Rgb.YELLOW
+            On = Rgb.AMBER
+            Off = Rgb.AMBER_THIRD
 
         class Stop:
             On = Rgb.RED
             Off = Rgb.RED_THIRD
 
         class Selected:
-            On = Rgb.LIGHT_BLUE
-            Off = Rgb.LIGHT_BLUE_THIRD
+            On = Rgb.AMBER
+            Off = Rgb.AMBER_THIRD
 
         class Volume:
-            On = Rgb.MINT
-            Off = Rgb.MINT_THIRD
+            On = Rgb.GREEN
+            Off = Rgb.GREEN_THIRD
 
         class VolumeSlider:
-            On = Rgb.MINT
+            On = Rgb.GREEN
             Off = Rgb.BLACK
 
         class Pan:
-            On = Rgb.MINT
-            Off = Rgb.MINT_THIRD
+            On = Rgb.GREEN
+            Off = Rgb.GREEN_THIRD
 
         class PanSlider:
-            On = Rgb.MINT
+            On = Rgb.AMBER
             Off = Rgb.BLACK
 
         class Sends:
-            On = Rgb.MINT
-            Off = Rgb.MINT_THIRD
+            On = Rgb.GREEN
+            Off = Rgb.GREEN_THIRD
 
         class SendsSlider:
-            On = Rgb.MINT
-            Off = Rgb.BLACK
-
+            On = Rgb.GREEN
+            Off = Rgb.GREEN_THIRD
         class SendsSlider_1:
-            On = Rgb.MINT
-            Off = Rgb.BLACK
+            On = Rgb.GREEN
+            Off = Rgb.GREEN_THIRD
 
         class SendsSlider_2:
-            On = Rgb.MINT
-            Off = Rgb.BLACK
+            On = Rgb.GREEN
+            Off = Rgb.GREEN_THIRD
 
     class Sends:  # not used yet on legacy launchpad
-        A = Rgb.BLUE
-        AAvail = Rgb.BLUE_THIRD
-        B = Rgb.BLUE
-        BAvail = Rgb.BLUE_THIRD
-        C = Rgb.LIGHT_BLUE
-        CAvail = Rgb.LIGHT_BLUE_THIRD
-        D = Rgb.MINT
-        DAvail = Rgb.MINT_THIRD
-        E = Rgb.AMBER
-        EAvail = Rgb.AMBER_THIRD
-        F = Rgb.YELLOW
-        FAvail = Rgb.YELLOW_THIRD
-        G = Rgb.AMBER
-        GAvail = Rgb.AMBER_THIRD
+        A = Rgb.RED
+        AAvail = Rgb.RED_THIRD
+        B = Rgb.RED
+        BAvail = Rgb.RED_THIRD
+        C = Rgb.RED
+        CAvail = Rgb.RED_THIRD
+        D = Rgb.RED
+        DAvail = Rgb.RED_THIRD
+        E = Rgb.RED
+        EAvail = Rgb.RED_THIRD
+        F = Rgb.RED
+        FAvail = Rgb.RED_THIRD
+        G = Rgb.RED
+        GAvail = Rgb.RED_THIRD
         H = Rgb.RED
         HAvail = Rgb.RED_THIRD
 
     class Device:  # device mode colours
         class Bank:
-            On = Rgb.BLUE
-            Off = Rgb.BLUE_THIRD
+            On = Rgb.GREEN
+            Off = Rgb.GREEN_THIRD
 
         class Lock:
-            Empty = Rgb.PURPLE
+            Empty = Rgb.BLACK
             Set = Rgb.RED_THIRD
             Locked = Rgb.RED
 
         class DefaultSlider:
-            On = Rgb.PURPLE
-            Off = Rgb.PURPLE_THIRD
+            On = Rgb.AMBER
+            Third = Rgb.AMBER
+            Half = Rgb.AMBER_HALF
+            Off = Rgb.AMBER_THIRD
 
         class CustomSlider0:
-            On = Rgb.PURPLE
-            Third = Rgb.PURPLE_THIRD
-            Half = Rgb.PURPLE_HALF
-            Off = Rgb.BLACK
+            On = Rgb.AMBER
+            Third = Rgb.AMBER
+            Half = Rgb.AMBER_HALF
+            Off = Rgb.AMBER_THIRD
 
         class CustomSlider1:
-            On = Rgb.PURPLE
-            Third = Rgb.PURPLE_THIRD
-            Half = Rgb.PURPLE_HALF
-            Off = Rgb.BLACK
+            On = Rgb.AMBER
+            Third = Rgb.AMBER
+            Half = Rgb.AMBER_HALF
+            Off = Rgb.AMBER_THIRD
 
         class CustomSlider2:
-            On = Rgb.LIGHT_BLUE
-            Third = Rgb.LIGHT_BLUE_THIRD
-            Half = Rgb.LIGHT_BLUE_HALF
-            Off = Rgb.BLACK
+            On = Rgb.AMBER
+            Third = Rgb.AMBER
+            Half = Rgb.AMBER_HALF
+            Off = Rgb.AMBER_THIRD
 
         class CustomSlider3:
-            On = Rgb.LIGHT_BLUE
-            Third = Rgb.LIGHT_BLUE_THIRD
-            Half = Rgb.LIGHT_BLUE_HALF
-            Off = Rgb.BLACK
+            On = Rgb.AMBER
+            Off = Rgb.AMBER_THIRD
 
         class CustomSlider4:
-            On = Rgb.MINT
-            Third = Rgb.MINT_THIRD
-            Half = Rgb.MINT_HALF
-            Off = Rgb.BLACK
+            On = Rgb.AMBER
+            Third = Rgb.AMBER
+            Half = Rgb.AMBER_HALF
+            Off = Rgb.AMBER_THIRD
 
         class CustomSlider5:
-            On = Rgb.MINT
-            Third = Rgb.MINT_THIRD
-            Half = Rgb.MINT_HALF
-            Off = Rgb.BLACK
+            On = Rgb.AMBER
+            Third = Rgb.AMBER
+            Half = Rgb.AMBER_HALF
+            Off = Rgb.AMBER_THIRD
 
         class CustomSlider6:
-            On = Rgb.BLUE
-            Third = Rgb.BLUE_THIRD
-            Half = Rgb.BLUE_HALF
-            Off = Rgb.BLACK
+            On = Rgb.AMBER
+            Off = Rgb.AMBER_THIRD
 
         class CustomSlider7:
-            On = Rgb.BLUE
-            Third = Rgb.BLUE_THIRD
-            Half = Rgb.BLUE_HALF
-            Off = Rgb.BLACK
-
+            On = Rgb.AMBER
+            Third = Rgb.AMBER
+            Half = Rgb.AMBER_HALF
+            Off = Rgb.AMBER_THIRD
+        
         class ColorSteps:
             Step0 = Rgb.RED
-            Step1 = Rgb.AMBER
-            Step2 = Rgb.YELLOW
-            Step3 = Rgb.GREEN
-            Step4 = Rgb.MINT
-            Step5 = Rgb.LIGHT_BLUE
-            Step6 = Rgb.BLUE
-            Step7 = Rgb.PINK
-            Step8 = Rgb.PURPLE
-            Step9 = Rgb.WHITE
+            Step1 = Rgb.RED_THIRD
+            Step2 = Rgb.RED
+            Step3 = Rgb.RED_THIRD
+            Step4 = Rgb.RED
+            Step5 = Rgb.RED_THIRD
+            Step6 = Rgb.RED
+            Step7 = Rgb.RED_THIRD
+            Step8 = Rgb.RED
+            Step9 = Rgb.RED_THIRD
+
         class PrecisionSlider:
-            On = Rgb.LIGHT_BLUE
-            Off = Rgb.LIGHT_BLUE_THIRD
+            On = Rgb.AMBER
+            Off = Rgb.AMBER_THIRD
 
         class ModeToggle:
-            Precision = Rgb.LIGHT_BLUE
-            Normal = Rgb.LIGHT_BLUE_THIRD
-            Stepless = Rgb.MINT_THIRD
-
+            Precision = Rgb.AMBER
+            Normal = Rgb.AMBER_THIRD
+            Stepless = Rgb.GREEN
         class Enum:
-            On = Rgb.MINT
-            Off = Rgb.MINT_THIRD
+            On = Rgb.AMBER
+            Off = Rgb.AMBER_THIRD
 
         class BigEnum:
-            On = Rgb.YELLOW
-            Off = Rgb.YELLOW_THIRD
+            On = Rgb.AMBER
+            Off = Rgb.AMBER_THIRD
 
         class Toggle:
             On = Rgb.RED
@@ -347,10 +343,14 @@ class Colors:
         class Octave:
             On = Rgb.RED
             Off = Rgb.RED_THIRD
+            
+        class SubBankSelector:
+            A = Rgb.GREEN
+            B = Rgb.RED
 
         class Mute:
-            On = Rgb.YELLOW
-            Off = Rgb.YELLOW_THIRD
+            On = Rgb.RED
+            Off = Rgb.RED_THIRD
 
         class Mode:
             On = Rgb.AMBER
@@ -362,24 +362,24 @@ class Colors:
                 Off = Rgb.RED_THIRD
 
             class ToClip:
-                On = Rgb.PURPLE
-                Off = Rgb.PURPLE_THIRD
+                On = Rgb.AMBER
+                Off = Rgb.AMBER_THIRD
 
         class LoopSelector:
-            SelectedPlaying = Rgb.PURPLE
-            Playing = Rgb.PURPLE_HALF
-            Selected = Rgb.BLUE
-            InLoop = Rgb.BLUE_THIRD
+            SelectedPlaying = Rgb.RED
+            Playing = Rgb.RED_THIRD
+            Selected = Rgb.GREEN
+            InLoop = Rgb.AMBER_THIRD
 
         class Quantization:
-            One = Rgb.GREEN
-            Two = Rgb.YELLOW
-            Three = Rgb.AMBER
-            Four = Rgb.RED
+            One = Rgb.GREEN_THIRD
+            Two = Rgb.GREEN_FULL
+            Three = Rgb.AMBER_FULL
+            Four = Rgb.RED_FULL
 
         class QuantizationLow:
-            One = Rgb.GREEN_HALF
-            Two = Rgb.YELLOW_HALF
+            One = Rgb.GREEN_THIRD
+            Two = Rgb.GREEN_FULL
             Three = Rgb.AMBER_HALF
             Four = Rgb.RED_HALF
 
@@ -388,44 +388,65 @@ class Colors:
                 On = Rgb.GREEN
                 Off = Rgb.GREEN_THIRD
 
-            Selected = Rgb.GREEN
+            Selected = Rgb.AMBER
             Playing = Rgb.RED
 
         class NoteEditor:
+            class LanesColorMap:
+                    def __call__(self,):
+                        return Rgb.RED
+                    
+                    A0 = Rgb.AMBER
+                    A1 = Rgb.ORANGE
+                    A2 = Rgb.MANDARIN
+                    A3 = Rgb.RED
+
+                    B0 = Rgb.AMBER 
+                    B1 = Rgb.YELLOW
+                    B2 = Rgb.LIME
+                    B3 = Rgb.GREEN
             class VelocityShifted:
+                
                 On = Rgb.AMBER
                 Off = Rgb.AMBER_THIRD
 
-            Velocity0 = Rgb.GREEN_THIRD
-            Velocity1 = Rgb.GREEN_HALF
-            Velocity2 = Rgb.GREEN
-            Velocity3 = Rgb.PINK_HALF
-            Velocity4 = Rgb.PINK
-            Muted = Rgb.DARK_GREY
-            Playing = Rgb.RED
-            Metronome = Rgb.BLUE
-            NoteMarker = Rgb.AMBER             
-            PageMarker = Rgb.YELLOW
+            Velocity0 = Rgb.GREEN_HALF
+            Velocity1 = Rgb.LIME
+            Velocity2 = Rgb.YELLOW
+            Velocity3 = Rgb.AMBER
+            Velocity4 = Rgb.MANDARIN
+
+            Muted = Rgb.RED_THIRD
+            Playing = Rgb.GREEN_FULL
+            Metronome = Rgb.GREEN_FULL
+            NoteMarker = Rgb.AMBER
+            PageMarker = Rgb.ORANGE_HALF
+
+            BankBackground_A = Rgb.AMBER_THIRD
+            BankBackground_B = Rgb.GREEN_THIRD
+
+            CurrentPageMarker = Rgb.RED_THIRD
+            CurrentPageMarkerPlay = Rgb.GREEN_THIRD
 
     class StepSequencer2:
         class Pitch:
-            On = Rgb.BLUE
-            Dim = Rgb.BLUE_THIRD
+            On = Rgb.GREEN
+            Dim = Rgb.GREEN_THIRD
             Off = Rgb.BLACK
 
         class Octave:
-            On = Rgb.PURPLE
-            Dim = Rgb.PURPLE_THIRD
+            On = Rgb.RED
+            Dim = Rgb.RED_THIRD
             Off = Rgb.BLACK
 
         class Velocity:
-            On = Rgb.LIGHT_BLUE
-            Dim = Rgb.LIGHT_BLUE_THIRD
+            On = Rgb.AMBER
+            Dim = Rgb.AMBER_HALF
             Off = Rgb.BLACK
 
         class Length:
-            On = Rgb.MINT
-            Dim = Rgb.MINT_THIRD
+            On = Rgb.AMBER
+            Dim = Rgb.AMBER_THIRD
             Off = Rgb.BLACK
 
         class Random:
@@ -433,8 +454,8 @@ class Colors:
             Off = Rgb.RED
 
         class NoteEditor:
-            MetronomeInPage = Rgb.BLUE
-            MetronomeInOtherPage = Rgb.BLUE_THIRD
+            MetronomeInPage = Rgb.AMBER
+            MetronomeInOtherPage = Rgb.AMBER_THIRD
             PlayInPage = Rgb.RED
             PlayInOtherPage = Rgb.RED_THIRD
 
@@ -453,20 +474,20 @@ class Colors:
             Off = Rgb.RED_THIRD
 
         class Play:
+            On = Rgb.GREEN
+            Off = Rgb.GREEN_HALF
+	
+        class Lock:
             On = Rgb.RED
             Off = Rgb.RED_THIRD
 
-        class Lock:
-            On = Rgb.PURPLE
-            Off = Rgb.PURPLE_THIRD
-
         class Stop:
-            On = Rgb.GREEN_HALF_PULSE
-            Off = Rgb.RED_THIRD
+            On = Rgb.ORANGE
+            Off = Rgb.ORANGE_HALF
 
         class Mute:
-            On = Rgb.YELLOW
-            Off = Rgb.YELLOW_THIRD
+            On = Rgb.AMBER
+            Off = Rgb.AMBER_THIRD
 
         class Undo:
             On = Rgb.AMBER
@@ -478,32 +499,32 @@ class Colors:
 
     class DrumGroup:
         PadEmpty = Rgb.BLACK
-        PadFilled = Rgb.YELLOW
-        PadFilled1 = Rgb.PURPLE_THIRD
-        PadFilled2 = Rgb.MINT_THIRD
-        PadFilled3 = Rgb.PINK_THIRD
-        PadFilled4 = Rgb.YELLOW
-        PadFilled5 = Rgb.GREY
-        PadSelected = Rgb.LIGHT_BLUE
-        PadSelectedNotSoloed = Rgb.LIGHT_BLUE
-        PadMuted = Rgb.AMBER_THIRD
-        PadMutedSelected = Rgb.LIGHT_BLUE
-        PadSoloed = Rgb.BLUE_THIRD
-        PadSoloedSelected = Rgb.LIGHT_BLUE
+        PadFilled = Rgb.RED_THIRD
+        PadFilled1 = Rgb.RED_THIRD
+        PadFilled2 = Rgb.RED_THIRD
+        PadFilled3 = Rgb.RED_THIRD
+        PadFilled4 = Rgb.RED_THIRD
+        PadFilled5 = Rgb.RED_THIRD
+        PadSelected = Rgb.GREEN
+        PadSelectedNotSoloed = Rgb.AMBER
+        PadMuted = Rgb.AMBER
+        PadMutedSelected = Rgb.AMBER
+        PadSoloed = Rgb.AMBER
+        PadSoloedSelected = Rgb.AMBER
         PadInvisible = Rgb.BLACK
         PadAction = Rgb.RED
 
         class Mute:
+            On = Rgb.RED
+            Off = Rgb.RED_THIRD
+
+        class Solo:
             On = Rgb.AMBER
             Off = Rgb.AMBER_THIRD
 
-        class Solo:
-            On = Rgb.BLUE
-            Off = Rgb.BLUE_THIRD
-
     class Note:
         FeedbackRecord = Rgb.RED
-        Feedback = Rgb.GREEN
+        Feedback = Rgb.AMBER
 
         class Octave:
             On = Rgb.GREEN
@@ -514,39 +535,39 @@ class Colors:
             Off = Rgb.AMBER_THIRD
 
         class Pads:
-            Root = Rgb.BLUE
-            InScale = Rgb.LIGHT_BLUE_HALF
-            Highlight = Rgb.LIGHT_BLUE
-            OutOfScale = Rgb.DARK_GREY
+            Root = Rgb.AMBER_THIRD
+            InScale = Rgb.GREEN_THIRD
+            Highlight = Rgb.GREEN
+            OutOfScale = Rgb.BLACK
             Invalid = Rgb.BLACK
 
     class Scale:  # scale edition
         class Horizontal:
-            On = Rgb.GREEN
-            Off = Rgb.GREEN_THIRD
+            On = Rgb.LIME
+            Off = Rgb.MANDARIN
 
         class AbsoluteRoot:
-            On = Rgb.RED
-            Off = Rgb.RED_THIRD
+            On = Rgb.AMBER
+            Off = Rgb.AMBER_THIRD
 
         class Mode:
             On = Rgb.RED
             Off = Rgb.RED_THIRD
 
         class Key:
-            On = Rgb.GREEN
-            Off = Rgb.GREEN_THIRD
+            On = Rgb.AMBER
+            Off = Rgb.AMBER_THIRD
 
-        CircleOfFifths = Rgb.BLUE
-        RelativeScale = Rgb.BLUE
+        CircleOfFifths = Rgb.RED
+        RelativeScale = Rgb.RED
 
         class Octave:
             On = Rgb.RED
             Off = Rgb.RED_THIRD
 
         class Modus:
-            On = Rgb.BLUE
-            Off = Rgb.BLUE_THIRD
+            On = Rgb.GREEN
+            Off = Rgb.GREEN_THIRD
 
         class QuickScale:
             On = Rgb.AMBER
@@ -554,13 +575,13 @@ class Colors:
 
     class QuickScale:  # quick scale on top of instrument mode
         class Modus:
-            On = Rgb.AMBER
-            Off = Rgb.AMBER_THIRD
+            On = Rgb.MANDARIN
+            Off = Rgb.ORANGE
 
         class Major:  # quick scale while in major mode
             class Key:
-                On = Rgb.GREEN
-                Off = Rgb.GREEN_THIRD
+                On = Rgb.AMBER
+                Off = Rgb.AMBER_THIRD
 
             CircleOfFifths = Rgb.RED
             RelativeScale = Rgb.RED
@@ -577,8 +598,8 @@ class Colors:
 
         class Other:
             class Key:
-                On = Rgb.AMBER
-                Off = Rgb.AMBER_THIRD
+                On = Rgb.GREEN
+                Off = Rgb.GREEN_THIRD
 
             CircleOfFifths = Rgb.RED
             RelativeScale = Rgb.RED
@@ -586,16 +607,16 @@ class Colors:
 
         class NoteRepeater:
             On = Rgb.RED_BLINK
-            Off = Rgb.RED_THIRD
+            Off = Rgb.BLACK
 
         class Quant:
             On = Rgb.GREEN
             Off = Rgb.GREEN_THIRD
             Mode = Rgb.GREEN
-            Straight = Rgb.BLUE_THIRD
-            Swing = Rgb.LIGHT_BLUE
-            Dotted = Rgb.PURPLE_THIRD
-            Flam = Rgb.PURPLE
+            Straight = Rgb.GREEN_THIRD
+            Swing = Rgb.GREEN_THIRD
+            Dotted = Rgb.GREEN_THIRD
+            Flam = Rgb.GREEN_THIRD
             Selected = Rgb.RED
             Note = Rgb.RED_HALF
             Tripplet = Rgb.RED_THIRD
