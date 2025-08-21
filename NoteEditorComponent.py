@@ -13,8 +13,8 @@ class NoteEditorComponent(ControlSurfaceComponent):
 		self._note_cache = None
 		self._playhead = None
 
-		# playback step indicator
-		self.display_metronome = False
+		# playback step indicator - enabled by default for 4-button tall cursor
+		self.display_metronome = True
 		self.metronome_color = "StepSequencer.NoteEditor.Metronome"
 		
 		# playback page indicator
@@ -282,10 +282,7 @@ class NoteEditorComponent(ControlSurfaceComponent):
 					play_logical_y_position = -1
 					play_physical_x = -1
 					play_physical_y = -1
-				# add play positition in amber
-				if(self.display_metronome):
-					if self._clip.is_playing and self.song().is_playing and play_physical_x >= 0 and play_physical_y >= 0:
-						self._grid_back_buffer[play_physical_x][play_physical_y] = "StepSequencer.NoteEditor.Metronome"
+				# Note: metronome cursor will be applied after all notes are processed for highest priority
  
 				# Display the selected page
 				if(self._display_page):
@@ -341,16 +338,19 @@ class NoteEditorComponent(ControlSurfaceComponent):
 								if note_velocity >= self.velocity_map[index]:
 									velocity_color = self.velocity_color_map[index]
 							# highligh playing notes in <playing_note_color>. even if they are from other pages.
+							# BUT don't override metronome cursor
 							if  not note_muted \
 									and note_page == play_page \
 							    and play_logical_x_position == note_logical_x_position  \
 									and play_logical_y_position == note_logical_y_position  \
 									and self.song().is_playing  \
-									and self._clip.is_playing:
+									and self._clip.is_playing \
+									and self._grid_back_buffer[note_physical_x][note_physical_y] != self.metronome_color:
 								self._grid_back_buffer[note_physical_x][note_physical_y] = self.playing_note_color
 							elif note_page == self._page:  # if note is in current page, then update grid
-								# do not erase current note highlight
-								if self._grid_back_buffer[note_physical_x][note_physical_y] != self.playing_note_color:
+								# do not erase current note highlight or metronome cursor
+								if (self._grid_back_buffer[note_physical_x][note_physical_y] != self.playing_note_color and 
+									self._grid_back_buffer[note_physical_x][note_physical_y] != self.metronome_color):
 									if note_muted:
 										self._grid_back_buffer[note_physical_x][note_physical_y] = self.muted_note_color
 									else:
@@ -360,17 +360,20 @@ class NoteEditorComponent(ControlSurfaceComponent):
 							lane = note_logical_y_position % 4
 							lane_color = self.lanes_color_map+f".{self._stepsequencer._selected_subBank}{lane}"
 							# highligh playing notes in <playing_note_color>. even if they are from other pages.
+							# BUT don't override metronome cursor
 							if  not note_muted \
 									and note_page == play_page \
 									and play_logical_x_position == note_logical_x_position  \
 									and play_logical_y_position == note_logical_y_position  \
 									and self.song().is_playing  \
-									and self._clip.is_playing:
+									and self._clip.is_playing \
+									and self._grid_back_buffer[note_physical_x][note_physical_y] != self.metronome_color:
 								self._grid_back_buffer[note_physical_x][note_physical_y] = self.playing_note_color
 
 							elif note_page == self._page:  # if note is in current page, then update grid
-								# do not erase current note highlight
-								if self._grid_back_buffer[note_physical_x][note_physical_y] != self.playing_note_color:
+								# do not erase current note highlight or metronome cursor
+								if (self._grid_back_buffer[note_physical_x][note_physical_y] != self.playing_note_color and 
+									self._grid_back_buffer[note_physical_x][note_physical_y] != self.metronome_color):
 									if note_muted:
 										self._grid_back_buffer[note_physical_x][note_physical_y] = self.muted_note_color
 									else:
@@ -382,6 +385,19 @@ class NoteEditorComponent(ControlSurfaceComponent):
 					if time.time() - self._display_page_time > 0.5:
 						self._display_page = False
 					self._display_selected_page()
+
+				# Apply metronome cursor LAST to ensure highest priority - 4 buttons tall cursor
+				if(self.display_metronome):
+					# Show cursor when playing OR when there's a valid playhead position
+					if play_logical_x_position >= 0 and (
+						(self._clip.is_playing and self.song().is_playing) or 
+						(self._playhead is not None)
+					):
+						# Display cursor on all 4 note lanes for the current step
+						for lane in range(4):  # 4 note lanes
+							cursor_physical_x, cursor_physical_y = self._logical_to_physical_coords(play_logical_x_position, lane)
+							if cursor_physical_x >= 0 and cursor_physical_y >= 0:
+								self._grid_back_buffer[cursor_physical_x][cursor_physical_y] = "StepSequencer.NoteEditor.Metronome"
 
 			# caching : compare back buffer to buffer and update grid. this should minimize midi traffic quite a bit.
 			for x in range(self._physical_width):
