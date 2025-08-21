@@ -43,12 +43,17 @@ class NoteEditorComponent(ControlSurfaceComponent):
 		self._display_page = False
 		self._display_page_time = time.time()
 
-
 		# notes
 		self._key_indexes = [36, 37, 38, 39, 40, 41, 42, 43]
 		self._key_index_is_in_scale = [True, False, True, True, False, True, False, True]
 		self._key_index_is_root_note = [True, False, False, False, False, False, False, False]
 		self._number_of_lines_per_note = 1
+
+		# Matrix layout: 4x16 displayed as two 4x8 sub-matrices (initialized later)
+		self._virtual_width = 16
+		self._physical_width = 8
+		self._physical_height = 8
+		self._virtual_height = 4
 
 		# clip
 		self._force_update = True
@@ -67,7 +72,7 @@ class NoteEditorComponent(ControlSurfaceComponent):
 		self._is_mute_shifted = False
 		self._is_mutlinote = False
 		self._velocity_mode_active = False
-				
+			
 		if (self.is_multinote):
 			log("is_multinote")	
 		else:
@@ -119,14 +124,15 @@ class NoteEditorComponent(ControlSurfaceComponent):
 
 	@property
 	def height(self):
-		return self._height
+		return self._virtual_height
 
 	def set_height(self, height):
 		self._height = height
+		self._virtual_height = 4  # Always use 4 for the new layout
 
 	@property
 	def width(self):
-		return self._width
+		return self._virtual_width  # Return logical width (16 steps)
 
 	@property
 	def number_of_lines_per_note(self):
@@ -169,8 +175,15 @@ class NoteEditorComponent(ControlSurfaceComponent):
 
 	# Display the third amber column to show the current page in multinote mode OK
 	def _display_selected_page(self): # OK
-		for i in range(0, self._height):
-			self._grid_back_buffer[self._page % self.width][i] = "StepSequencer.NoteEditor.PageMarker"
+		# Display page marker on both sub-matrices
+		logical_x = self._page % self.width
+		if logical_x < self.width:
+			physical_x, physical_y_top = self._logical_to_physical_coords(logical_x, 0)
+			physical_x, physical_y_bottom = self._logical_to_physical_coords(logical_x, 3)
+			for y in range(self._physical_height):
+				# Only mark the column corresponding to the page
+				if logical_x == physical_x or logical_x == physical_x + 8:
+					self._grid_back_buffer[physical_x][y] = "StepSequencer.NoteEditor.PageMarker"
 		
 	# Displays 3 buttons for the root of the scale and 1 for the in scale notes 	
 	def _display_note_markers(self, selected_subBank="B"):
@@ -193,9 +206,49 @@ class NoteEditorComponent(ControlSurfaceComponent):
 			if (self._matrix != None):
 				self._matrix.add_value_listener(self._matrix_value)
 				self._width = self._matrix.width()
-				#self._height = self._matrix.height()
+				self._height = self._matrix.height()
+				# Set up the new layout properties
+				self._physical_width = self._width  # 8
+				self._physical_height = self._height  # 8
+				# Grid buffers remain 8x8 for the physical matrix
 				self._grid_buffer = [[0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0]]
 				self._grid_back_buffer = [[0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0]]
+
+	def _logical_to_physical_coords(self, logical_x, logical_y):
+		"""Convert logical 4x16 coordinates to physical 8x8 coordinates"""
+		# Clamp values to safe ranges
+		logical_x = max(0, min(logical_x, 15))  # 0-15
+		logical_y = max(0, min(logical_y, 3))   # 0-3 for 4 note lanes
+		
+		# logical_x: 0-15 (16 steps), logical_y: 0-3 (4 note lanes)
+		# Upper 4x8: steps 0-7, y=0-3 -> physical x=0-7, y=0-3
+		# Lower 4x8: steps 8-15, y=0-3 -> physical x=0-7, y=4-7
+		if logical_x < 8:
+			# Upper sub-matrix (steps 0-7)
+			physical_x = logical_x
+			physical_y = logical_y
+		else:
+			# Lower sub-matrix (steps 8-15)
+			physical_x = logical_x - 8
+			physical_y = logical_y + 4
+		return physical_x, physical_y
+
+	def _physical_to_logical_coords(self, physical_x, physical_y):
+		"""Convert physical 8x8 coordinates to logical 4x16 coordinates"""
+		# Clamp values to safe ranges
+		physical_x = max(0, min(physical_x, 7))  # 0-7
+		physical_y = max(0, min(physical_y, 7))  # 0-7
+		
+		# physical_x: 0-7, physical_y: 0-7
+		if physical_y < 4:
+			# Upper sub-matrix
+			logical_x = physical_x
+			logical_y = physical_y
+		else:
+			# Lower sub-matrix
+			logical_x = physical_x + 8
+			logical_y = physical_y - 4
+		return logical_x, logical_y
 
 
 
@@ -205,30 +258,34 @@ class NoteEditorComponent(ControlSurfaceComponent):
 			
 
 			# clear back buffer. BACKGROUND COLOR <--
-			for x in range(self.width):
-				for y in range(self.height):
+			for x in range(self._physical_width):
+				for y in range(self._physical_height):
 					self._grid_back_buffer[x][y] = "DefaultButton.Disabled"
 
 			# update back buffer
 			if self._clip != None and self._note_cache != None:
 
-				# playback position
+				# playback position (using logical coordinates)
 				if self._playhead != None:
 					play_position = self._playhead  # position in beats (integer = number of beats, decimal subdivisions)
 					play_page = int(play_position / self.quantization / self.width / self.number_of_lines_per_note)
 					play_row = int(play_position / self.quantization / self.width) % self.number_of_lines_per_note
-					play_x_position = int(play_position / self.quantization) % self.width
-					play_y_position = int(play_position / self.quantization / self.width) % self.height
+					play_logical_x_position = int(play_position / self.quantization) % self.width
+					play_logical_y_position = int(play_position / self.quantization / self.width) % self._virtual_height
+					# Convert to physical coordinates for display
+					play_physical_x, play_physical_y = self._logical_to_physical_coords(play_logical_x_position, play_logical_y_position)
 				else:
 					play_position = -1
 					play_page = -1
 					play_row = -1
-					play_x_position = -1
-					play_y_position = -1
+					play_logical_x_position = -1
+					play_logical_y_position = -1
+					play_physical_x = -1
+					play_physical_y = -1
 				# add play positition in amber
 				if(self.display_metronome):
-					if self._clip.is_playing and self.song().is_playing:
-						self._grid_back_buffer[play_x_position][play_y_position] = "StepSequencer.NoteEditor.Metronome"
+					if self._clip.is_playing and self.song().is_playing and play_physical_x >= 0 and play_physical_y >= 0:
+						self._grid_back_buffer[play_physical_x][play_physical_y] = "StepSequencer.NoteEditor.Metronome"
  
 				# Display the selected page
 				if(self._display_page):
@@ -254,45 +311,30 @@ class NoteEditorComponent(ControlSurfaceComponent):
 					note_velocity = note[3] # velocity: 0-127 value #
 					note_muted = note[4]#Boolean
 					note_page = int(note_position / self.quantization / self.width / self.number_of_lines_per_note)
-					note_grid_x_position = int(note_position / self.quantization) % self.width
-					note_grid_y_position = int(note_position / self.quantization / self.width) % self.height
-
-					#Calculate note position in the grid (note position to matrix button logic)
-					if self.is_multinote:
-						# compute base note, taking into account number_of_lines_per_note
-						try:
-							note_idx = self.key_indexes.index(note_key)
-						except ValueError:
-							note_idx = -1
-						note_grid_y_base = note_idx * self.number_of_lines_per_note
-						if(note_grid_y_base >= 0):
-							note_grid_y_base = (7 - note_grid_y_base) - (self.number_of_lines_per_note - 1)
-						if(note_grid_y_base < 0):
-							note_grid_y_base = -1
-
-						note_grid_y_offset = int(note_position / self.quantization / self.width) % self.number_of_lines_per_note
-					else:
-						idx = 1
-						try:
-							idx = self.key_indexes.index(note_key)
-						except ValueError:
-							idx = -1
+					note_logical_x_position = int(note_position / self.quantization) % self.width
+					
+					# Find which note lane this belongs to
+					try:
+						note_idx = self.key_indexes.index(note_key)
+					except ValueError:
+						note_idx = -1
+					
+					if note_idx != -1:
+						# Calculate logical Y position (note lane: 0-3)
+						note_logical_y_position = note_idx
 						
-						if idx == 0:
-							note_grid_y_base = 0
-						else:
-							note_grid_y_base = -1
-					note_grid_y_offset = int(note_position / self.quantization / self.width) % self.number_of_lines_per_note
-
-					if note_grid_y_base != -1 and note_grid_y_base < self.height:
-						note_grid_y_position = note_grid_y_base + note_grid_y_offset
+						# Convert to physical coordinates
+						note_physical_x, note_physical_y = self._logical_to_physical_coords(note_logical_x_position, note_logical_y_position)
 					else:
-						note_grid_x_position = -1
-						note_grid_y_position = -1
+						# Note not in our key range, skip it
+						note_logical_x_position = -1
+						note_logical_y_position = -1
+						note_physical_x = -1
+						note_physical_y = -1
 				
 					#Set note color
-					if (note_grid_x_position >= 0):
-						if self._velocity_mode_active == True: # velocity mode active
+					if (note_physical_x >= 0 and note_physical_y >= 0):
+						if self._velocity_mode_active == True: # velocity mode active
 							# compute Velocity colors
 							velocity_color = self.velocity_color_map[0]
 							for index in range(len(self.velocity_map)):
@@ -301,42 +343,38 @@ class NoteEditorComponent(ControlSurfaceComponent):
 							# highligh playing notes in <playing_note_color>. even if they are from other pages.
 							if  not note_muted \
 									and note_page == play_page \
-							    and play_x_position == note_grid_x_position  \
-									and (play_y_position == note_grid_y_position  \
-										and not self.is_multinote or self.is_multinote  \
-										and note_grid_y_offset == play_row)  \
+							    and play_logical_x_position == note_logical_x_position  \
+									and play_logical_y_position == note_logical_y_position  \
 									and self.song().is_playing  \
 									and self._clip.is_playing:
-								self._grid_back_buffer[note_grid_x_position][note_grid_y_position] = self.playing_note_color
+								self._grid_back_buffer[note_physical_x][note_physical_y] = self.playing_note_color
 							elif note_page == self._page:  # if note is in current page, then update grid
 								# do not erase current note highlight
-								if self._grid_back_buffer[note_grid_x_position][note_grid_y_position] != self.playing_note_color:
+								if self._grid_back_buffer[note_physical_x][note_physical_y] != self.playing_note_color:
 									if note_muted:
-										self._grid_back_buffer[note_grid_x_position][note_grid_y_position] = self.muted_note_color
+										self._grid_back_buffer[note_physical_x][note_physical_y] = self.muted_note_color
 									else:
-										self._grid_back_buffer[note_grid_x_position][note_grid_y_position] = velocity_color
+										self._grid_back_buffer[note_physical_x][note_physical_y] = velocity_color
 
 						elif self._velocity_mode_active == False: # velocity mode inactive
-							lane = note_grid_y_position % 4
+							lane = note_logical_y_position % 4
 							lane_color = self.lanes_color_map+f".{self._stepsequencer._selected_subBank}{lane}"
 							# highligh playing notes in <playing_note_color>. even if they are from other pages.
 							if  not note_muted \
 									and note_page == play_page \
-									and play_x_position == note_grid_x_position  \
-									and (play_y_position == note_grid_y_position  \
-										and not self.is_multinote \
-										or self.is_multinote and note_grid_y_offset == play_row)  \
+									and play_logical_x_position == note_logical_x_position  \
+									and play_logical_y_position == note_logical_y_position  \
 									and self.song().is_playing  \
 									and self._clip.is_playing:
-								self._grid_back_buffer[note_grid_x_position][note_grid_y_position] = self.playing_note_color
+								self._grid_back_buffer[note_physical_x][note_physical_y] = self.playing_note_color
 
 							elif note_page == self._page:  # if note is in current page, then update grid
 								# do not erase current note highlight
-								if self._grid_back_buffer[note_grid_x_position][note_grid_y_position] != self.playing_note_color:
+								if self._grid_back_buffer[note_physical_x][note_physical_y] != self.playing_note_color:
 									if note_muted:
-										self._grid_back_buffer[note_grid_x_position][note_grid_y_position] = self.muted_note_color
+										self._grid_back_buffer[note_physical_x][note_physical_y] = self.muted_note_color
 									else:
-										self._grid_back_buffer[note_grid_x_position][note_grid_y_position] = lane_color
+										self._grid_back_buffer[note_physical_x][note_physical_y] = lane_color
 
 
 				#Display the column to show the page for half a second
@@ -346,8 +384,8 @@ class NoteEditorComponent(ControlSurfaceComponent):
 					self._display_selected_page()
 
 			# caching : compare back buffer to buffer and update grid. this should minimize midi traffic quite a bit.
-			for x in range(self.width):
-				for y in range(self.height):
+			for x in range(self._physical_width):
+				for y in range(self._physical_height):
 					if self._grid_back_buffer[x][y] != self._grid_buffer[x][y] or self._force_update:
 						self._grid_buffer[x][y] = self._grid_back_buffer[x][y]
 						self._matrix.get_button(x, y).set_light(self._grid_buffer[x][y])
@@ -361,22 +399,24 @@ class NoteEditorComponent(ControlSurfaceComponent):
 
 	# matrix buttons listener OK
 	def _matrix_value(self, value, x, y, is_momentary): 
-		if self.is_enabled() and y < self.height: #Height value can be 8 (MULTINOTE/SCALE_EDIT) or 4 (STEPSEQ_MODE_NORMAL)
+		if self.is_enabled() and y < self._physical_height: #Height value can be 8 (MULTINOTE/SCALE_EDIT) or 4 (STEPSEQ_MODE_NORMAL)
 			if ((value != 0) or (not is_momentary)): #if NOTE_ON or button is toggle
 				self._stepsequencer._was_velocity_shifted = False # Some previous state logic INVESTIGATE
-				self._matrix_value_message([value, x, y, is_momentary])
+				# Convert physical coordinates to logical coordinates
+				logical_x, logical_y = self._physical_to_logical_coords(x, y)
+				self._matrix_value_message([value, logical_x, logical_y, is_momentary])
 
 	#Add/Delete/Mute notes in the cache for PL light management and in the Live's Clip OK
 	def _matrix_value_message(self, values):  # (value=127/0, x=idx, y=idx, is_momentary=True) 
 		value = values[0]
-		x = values[1]
-		y = values[2]
+		x = values[1]  # logical x (0-15)
+		y = values[2]  # logical y (0-3)
 		is_momentary = values[3]
 		"""(pitch, time, duration, velocity, mute state)"""
 		assert (self._matrix != None)
 		assert (value in range(128))
-		assert (x in range(self._matrix.width()))
-		assert (y in range(self._matrix.height()))
+		assert (x in range(self.width))  # logical width (16)
+		assert (y in range(self._virtual_height))  # logical height (4)
 		assert isinstance(is_momentary, type(False))
 
 		if self.is_enabled() and self._clip == None:
@@ -387,14 +427,11 @@ class NoteEditorComponent(ControlSurfaceComponent):
 				if(self._is_velocity_shifted):
 					self._velocity_notes_pressed = self._velocity_notes_pressed + 1 #Just changing some note velocity
 
-				# note data
-
-				if self.is_multinote: # Calculate note pitch and time for notes 
-					time = self.quantization * (self._page * self.width * self.number_of_lines_per_note + x + (y % self.number_of_lines_per_note * self.width))
-					pitch = self._key_indexes[int(8 / self.number_of_lines_per_note - 1 - y / self.number_of_lines_per_note)]
-				else:
-					time = self.quantization * (self._page * self.width * self.number_of_lines_per_note + y * self.width + x)
-					pitch = self._key_indexes[0]
+				# note data - now using logical coordinates
+				# Time calculation: position in the sequence
+				time = self.quantization * (self._page * self.width + x)
+				# Pitch: directly from the y coordinate (note lane)
+				pitch = self._key_indexes[y]
 				velocity = self._velocity #setted by velocity button
 				duration = self.quantization #setted by quantization button in StepSequencerComponent
 
@@ -513,8 +550,14 @@ class NoteEditorComponent(ControlSurfaceComponent):
 
 	# Display the third red column to show the current page in multinote mode each time that the metronome goes to new pageOK
 	def _display_current_page(self): # OK
-		for i in range(0, self._height):
-			if(self._page==self._current_page):
-				self._grid_back_buffer[self._current_page % self.width][i] = "StepSequencer.NoteEditor.CurrentPageMarkerPlay"
-			else:
-				self._grid_back_buffer[self._current_page % self.width][i] = "StepSequencer.NoteEditor.CurrentPageMarker"
+		# Display current page marker on both sub-matrices
+		logical_x = self._current_page % self.width
+		if logical_x < self.width:
+			physical_x, _ = self._logical_to_physical_coords(logical_x, 0)
+			for y in range(self._physical_height):
+				# Only mark the column corresponding to the current page
+				if logical_x == physical_x or logical_x == physical_x + 8:
+					if(self._page==self._current_page):
+						self._grid_back_buffer[physical_x][y] = "StepSequencer.NoteEditor.CurrentPageMarkerPlay"
+					else:
+						self._grid_back_buffer[physical_x][y] = "StepSequencer.NoteEditor.CurrentPageMarker"
