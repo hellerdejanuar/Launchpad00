@@ -418,7 +418,7 @@ class Colors:
 
             Muted = Rgb.RED_THIRD
             Playing = Rgb.GREEN_FULL
-            Metronome = Rgb.RED
+            Metronome = Rgb.GREEN_FULL
             NoteMarker = Rgb.AMBER
             PageMarker = Rgb.ORANGE_HALF
 
