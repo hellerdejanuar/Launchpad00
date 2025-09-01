@@ -117,7 +117,7 @@ class StepSequencerComponent(CompoundComponent):
         self._last_lock_button_press = time.time()
         self._long_press = 0.5
         self._lock_button = None
-        #self.set_lock_button(self._side_buttons[1])#Pan
+        self.set_lock_button(self._side_buttons[1])  # Pan button - lock note editor to current clip
         self._selected_track = None
             
     def _set_mute_shift_function(self): #Allow to mute notes in the grid or all notes if selecting on Note Selector #FIX bad behavior
@@ -914,6 +914,11 @@ class StepSequencerComponent(CompoundComponent):
             if self._note_editor._velocity_button:
                 self._original_button_assignments['note_velocity'] = self._note_editor._velocity_button
                 self._note_editor.set_velocity_button(None)
+        
+        # Disconnect lock button from side_button[1] 
+        if hasattr(self, '_lock_button') and self._lock_button:
+            self._original_button_assignments['lock_button'] = self._lock_button
+            self.set_lock_button(None)
                 
         # Visually disable non-loop buttons
         if self._side_buttons:
@@ -933,6 +938,9 @@ class StepSequencerComponent(CompoundComponent):
             
         if 'note_velocity' in self._original_button_assignments:
             self._note_editor.set_velocity_button(self._original_button_assignments['note_velocity'])
+            
+        if 'lock_button' in self._original_button_assignments:
+            self.set_lock_button(self._original_button_assignments['lock_button'])
         
         # Clear stored assignments
         self._original_button_assignments.clear()
@@ -956,6 +964,9 @@ class StepSequencerComponent(CompoundComponent):
         # Explicitly update velocity button 
         if self._note_editor and hasattr(self._note_editor, '_update_velocity_button'):
             self._note_editor._update_velocity_button()
+            
+        # Update lock button
+        self._update_lock_button()
             
         if self._track_controller:
             self._track_controller.update()
