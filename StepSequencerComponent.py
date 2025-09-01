@@ -66,7 +66,7 @@ class StepSequencerComponent(CompoundComponent):
 
         # displayed Bank
         self._selected_subBank = "A"
-        
+
         # Initialize loop selector state early (needed by quantization setup)
         self._loop_selector_active = False
         # Store original button assignments for proper disconnect/reconnect
@@ -942,8 +942,8 @@ class StepSequencerComponent(CompoundComponent):
             for i, button in enumerate(self._side_buttons):
                 if button and i != 6:  # Skip loop selector activation button
                     button.set_enabled(True)
-                                    # Clear any disabled state lights
-                button.clear_send_cache()
+                    # Clear any disabled state lights
+                    button.clear_send_cache()
         
         # Clear all side button displays
         self._clear_side_buttons()
@@ -973,6 +973,38 @@ class StepSequencerComponent(CompoundComponent):
                     button.turn_off()
                     # Clear any cached states
                     button.clear_send_cache()
+
+    def _clear_top_buttons(self):
+        """Clear the visual display of all top buttons - reusable function"""
+        # Clear all top buttons by turning them off and resetting their state
+        if self._top_buttons:
+            for i, button in enumerate(self._top_buttons):
+                if button:
+                    # Set to default disabled state to clear any colors/states
+                    button.set_light("DefaultButton.Disabled")
+                    button.turn_off()
+                    # Clear any cached states
+                    button.clear_send_cache()
+
+    def _clear_matrix_buttons(self):
+        """Clear the visual display of all matrix buttons - reusable function"""
+        # Clear all matrix buttons by turning them off and resetting their state
+        if self._matrix:
+            for x in range(self._matrix.width()):
+                for y in range(self._matrix.height()):
+                    button = self._matrix.get_button(x, y)
+                    if button:
+                        # Set to default disabled state to clear any colors/states
+                        button.set_light("DefaultButton.Disabled")
+                        button.turn_off()
+                        # Clear any cached states
+                        button.clear_send_cache()
+
+    def _clear_all_buttons(self):
+        """Clear the visual display of ALL buttons (side, top, matrix) - master clearing function"""
+        self._clear_side_buttons()
+        self._clear_top_buttons()
+        self._clear_matrix_buttons()
 
 # LOCK Button
     def _update_lock_button(self):
