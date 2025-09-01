@@ -882,7 +882,8 @@ class StepSequencerComponent(CompoundComponent):
                     self._loop_selector.update()  # Force update when enabling
                 else:
                     self._loop_selector.set_enabled(False)
-                    self._reconnect_side_button_functionality()
+                    # Comprehensive refresh with corrections
+                    self._comprehensive_refresh_on_exit()
                 self._update_loop_selector_button()
 
     def _update_loop_selector_button(self):
@@ -945,7 +946,7 @@ class StepSequencerComponent(CompoundComponent):
 
     def _reconnect_side_button_functionality(self):
         """Reconnect side button functionality when exiting loop selector mode"""
-        # Restore original button assignments
+        # Restore NoteEditor MAIN button assignments
         # start/stop button (side_button[0]) was never disconnected, so no need to reconnect
             
         if 'note_subbank' in self._original_button_assignments:
@@ -1031,6 +1032,65 @@ class StepSequencerComponent(CompoundComponent):
         self._clear_side_buttons()
         self._clear_top_buttons()
         self._clear_matrix_buttons()
+    
+    def _comprehensive_refresh_on_exit(self):
+        """Comprehensive refresh when exiting loop selector mode with corrections"""
+        
+        # Step 1: Clear ALL side buttons and force cache clearing
+        self._clear_side_buttons()
+        
+        # Step 2: Force clear button caches to prevent stale state issues
+        if self._side_buttons:
+            for button in self._side_buttons:
+                if button and hasattr(button, 'clear_send_cache'):
+                    button.clear_send_cache()
+        
+        # Step 3: Reconnect functionality FIRST (timing correction)
+        self._reconnect_side_button_functionality()
+        
+        # Step 4: Force component updates with explicit cache clearing
+        # This ensures components actually update their buttons
+        if self._note_selector:
+            self._note_selector.set_enabled(False)  # Force state change
+            self._note_selector.set_enabled(True)   # to trigger updates
+            self._note_selector.update()
+            
+        if self._note_editor:
+            self._note_editor.set_enabled(False)  # Force state change
+            self._note_editor.set_enabled(True)   # to trigger updates  
+            self._note_editor.update()
+            
+        if self._track_controller:
+            self._track_controller.update()
+        
+        # Step 5: Update all buttons (after components are properly reconnected)
+        self._update_buttons()
+        
+        # Step 6: Explicitly handle unassigned buttons (comprehensive approach needs this)
+        self._disable_unassigned_side_buttons()
+    
+    def _disable_unassigned_side_buttons(self):
+        """Disable side buttons that have no function assigned in main mode"""
+        if self._side_buttons:
+            for i, button in enumerate(self._side_buttons):
+                if button:
+                    # Check which buttons should be disabled based on current assignments
+                    should_disable = False
+                    
+                    # side_button[0] = start/stop (always assigned)
+                    # side_button[1] = lock button (assigned if _lock_button is set)
+                    # side_button[2] = usually unassigned in step sequencer main mode
+                    # side_button[3] = subBank selector (assigned to note selector)
+                    # side_button[4] = usually unassigned in step sequencer main mode  
+                    # side_button[5] = velocity button (assigned to note editor)
+                    # side_button[6] = loop selector activation button (always assigned)
+                    # side_button[7] = usually unassigned in step sequencer main mode
+                    
+                    if i == 2 or i == 4 or i == 7:  # Commonly unassigned buttons
+                        should_disable = True
+                    
+                    if should_disable:
+                        button.set_light("DefaultButton.Disabled")
 
     def make_button_blink_oldschool(self, button, bright_color="StepSequencer.NoteEditor.Velocity1", dim_color="DefaultButton.On"):
         """Old-school blinking: manually toggle between two colors using timed callbacks"""
