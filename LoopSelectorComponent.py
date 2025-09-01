@@ -242,7 +242,7 @@ class LoopSelectorComponent(ControlSurfaceComponent):
                         else:
                             if selected:
                                 self._cache[
-                                    i] = "StepSequencer.LoopSelector.Selected"
+                                    i] = "StepSequencer.LoopSelector.SelectedOutOfLoop"
                             else:
                                 self._cache[i] = "DefaultButton.Disabled"
 

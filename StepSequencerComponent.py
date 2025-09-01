@@ -38,6 +38,10 @@ class StepSequencerComponent(CompoundComponent):
         super(StepSequencerComponent, self).__init__()
         self._control_surface = control_surface
         self._number_of_lines_per_note = 1
+        
+        # Old-school blinking state management
+        self._blinking_buttons = {}  # {button: {'state': bool, 'colors': [color1, color2], 'task': task}}
+        self._blink_interval = 1  # quarter note (1 beat - 4 times faster tempo-synced blink)
         self.QUANTIZATION_COLOR_MAP = ["StepSequencer.Quantization.One", "StepSequencer.Quantization.Two", "StepSequencer.Quantization.Three", "StepSequencer.Quantization.Four"]
         self.QUANTIZATION_COLOR_MAP_LOW = ["StepSequencer.QuantizationLow.One", "StepSequencer.QuantizationLow.Two", "StepSequencer.QuantizationLow.Three", "StepSequencer.QuantizationLow.Four"]
         self._name = "drum step sequencer"
@@ -426,7 +430,6 @@ class StepSequencerComponent(CompoundComponent):
         self._scale_selector.update()
 
     def _update_loop_selector(self):
-        # Loop selector is only enabled when explicitly activated via button
         if self._loop_selector_active and self._mode == STEPSEQ_MODE_NORMAL:
             self._loop_selector.set_enabled(True)
             self._loop_selector.update()
@@ -627,6 +630,8 @@ class StepSequencerComponent(CompoundComponent):
     def _on_playing_status_changed(self):  # playing status changed listener
         if self.is_enabled():
             self._on_playing_position_changed()
+            # Update loop selector button when playing status changes
+            self._update_loop_selector_button()
 
     def _on_playing_position_changed(self):  # playing position changed listener
         if self.is_enabled():
@@ -883,25 +888,36 @@ class StepSequencerComponent(CompoundComponent):
     def _update_loop_selector_button(self):
         if self.is_enabled() and self._loop_selector_button != None:
             if self._clip != None:
-                if self._loop_selector_active:
-                    # RGB.LIME when loop selector mode is active
-                    self._loop_selector_button.set_light("StepSequencer.NoteEditor.Velocity1")  # Maps to Rgb.LIME
+                # Check if Live is playing to determine behavior
+                if hasattr(self._control_surface, 'song') and self._control_surface.song():
+                    is_playing = self._control_surface.song().is_playing
                 else:
-                    # Normal state when inactive but available
-                    self._loop_selector_button.set_light("DefaultButton.On")
+                    is_playing = False
+                
+                if is_playing:
+                    if self._loop_selector_active:
+                        # Live playing + loop selector active: blink between green_half and off
+                        self.make_button_blink_oldschool(
+                            self._loop_selector_button, 
+                            "StepSequencer.NoteEditor.Velocity0",  # GREEN_HALF (bright)
+                            "DefaultButton.Disabled"  # OFF (dark)
+                        )
+                    else:
+                        # Live playing + loop selector not active: green_third
+                        self.stop_button_blink_oldschool(self._loop_selector_button, "DefaultButton.Off")
+                else:
+                    # Live not playing: always green_half (whether active or not)
+                    self.stop_button_blink_oldschool(self._loop_selector_button, "StepSequencer.NoteEditor.Velocity0")
             else:
                 self._loop_selector_button.set_light("DefaultButton.Disabled")
 
     def _disconnect_side_button_functionality(self):
-        """Disconnect ALL side button functionality when entering loop selector mode"""
+        """Disconnect side button functionality when entering loop selector mode (except start/stop)"""
         # Store current assignments and disconnect components from side buttons
         self._original_button_assignments.clear()
         
-        # Disconnect track controller from side_button[0] (start/stop)
-        if self._track_controller and hasattr(self._track_controller, '_start_stop_button'):
-            if self._track_controller._start_stop_button:
-                self._original_button_assignments['track_start_stop'] = self._track_controller._start_stop_button
-                self._track_controller.set_start_stop_button(None)
+        # Keep track controller start/stop button (side_button[0]) active in loop selector mode
+        # No need to disconnect it - it should remain available
         
         # Disconnect note selector from side_button[3] (subBank selector) 
         if self._note_selector and hasattr(self._note_selector, '_subBank_selector'):
@@ -923,15 +939,14 @@ class StepSequencerComponent(CompoundComponent):
         # Visually disable non-loop buttons
         if self._side_buttons:
             for i, button in enumerate(self._side_buttons):
-                # Skip loop selector buttons (1-4) and activation button (6)
-                if button and i not in [1, 2, 3, 4, 6]:
+                # Skip loop selector buttons (1-4), activation button (6), and start/stop button (0)
+                if button and i not in [0, 1, 2, 3, 4, 6]:
                     button.set_light("DefaultButton.Disabled")
 
     def _reconnect_side_button_functionality(self):
-        """Reconnect ALL side button functionality when exiting loop selector mode"""
+        """Reconnect side button functionality when exiting loop selector mode"""
         # Restore original button assignments
-        if 'track_start_stop' in self._original_button_assignments:
-            self._track_controller.set_start_stop_button(self._original_button_assignments['track_start_stop'])
+        # start/stop button (side_button[0]) was never disconnected, so no need to reconnect
             
         if 'note_subbank' in self._original_button_assignments:
             self._note_selector.set_subBank_selector(self._original_button_assignments['note_subbank'])
@@ -1016,6 +1031,126 @@ class StepSequencerComponent(CompoundComponent):
         self._clear_side_buttons()
         self._clear_top_buttons()
         self._clear_matrix_buttons()
+
+    def make_button_blink_oldschool(self, button, bright_color="StepSequencer.NoteEditor.Velocity1", dim_color="DefaultButton.On"):
+        """Old-school blinking: manually toggle between two colors using timed callbacks"""
+        if not button:
+            return
+            
+        # Stop any existing blink for this button
+        self.stop_button_blink_oldschool(button)
+        
+        # Set up blinking state
+        self._blinking_buttons[button] = {
+            'state': False,  # False = dim, True = bright
+            'colors': [dim_color, bright_color],
+            'task': None
+        }
+        
+        # Force immediate start of the blink cycle with current interval
+        self._start_blink_cycle(button)
+    
+    def _start_blink_cycle(self, button):
+        """Start or continue the blink cycle for a button"""
+        if button not in self._blinking_buttons:
+            return
+            
+        # Sync with Live's beat position instead of arbitrary timing
+        try:
+            if hasattr(self._control_surface, 'song') and self._control_surface.song():
+                current_beat = self._control_surface.song().get_current_beats_song_time().beats
+                # Determine if we should be bright or dim based on beat position
+                beat_cycle = int(current_beat) % (self._blink_interval * 2)  # Full on/off cycle
+                should_be_bright = beat_cycle < self._blink_interval
+            else:
+                # Fallback: toggle state
+                blink_data = self._blinking_buttons[button]
+                should_be_bright = not blink_data['state']
+        except:
+            # Fallback: toggle state  
+            blink_data = self._blinking_buttons[button]
+            should_be_bright = not blink_data['state']
+        
+        # Update state and set color
+        blink_data = self._blinking_buttons[button]
+        blink_data['state'] = should_be_bright
+        color = blink_data['colors'][1 if should_be_bright else 0]
+        button.set_light(color)
+        
+        # Schedule next check (check more frequently for responsiveness)
+        if hasattr(self._control_surface, 'schedule_message'):
+            self._control_surface.schedule_message(
+                1,  # Check every beat for beat sync
+                lambda: self._start_blink_cycle(button)
+            )
+            
+    def _calculate_tempo_sync_interval(self):
+        """Calculate the actual interval based on Live's current tempo"""
+        try:
+            if hasattr(self._control_surface, 'song') and self._control_surface.song():
+                current_tempo = self._control_surface.song().tempo
+                # Convert beats to schedule_message units
+                # Assuming schedule_message uses some kind of ticks
+                # 1 beat at 120 BPM = 500ms, so we scale accordingly
+                beat_duration_ms = (60.0 / current_tempo) * 1000  # milliseconds per beat
+                total_interval_ms = beat_duration_ms * self._blink_interval
+                # Convert to schedule_message units (appears to be ~100ms per unit based on usage)
+                return int(total_interval_ms / 100)
+            else:
+                # Fallback to fixed interval if tempo not available
+                return self._blink_interval * 5
+        except:
+            # Fallback
+            return self._blink_interval * 5
+    
+    def stop_button_blink_oldschool(self, button, final_color="DefaultButton.On"):
+        """Stop old-school blinking and set final color"""
+        if button in self._blinking_buttons:
+            # Clean up blinking state
+            del self._blinking_buttons[button]
+        
+        # Set final color
+        if button:
+            button.set_light(final_color)
+
+    def make_button_blink(self, button, color_name=""):
+        """Make a button blink - falls back to old-school method"""
+        if not button:
+            return
+            
+        # Use old-school blinking for reliability
+        color_upper = color_name.upper()
+        if "RED" in color_upper or "RECORD" in color_upper:
+            self.make_button_blink_oldschool(button, "StepSequencer.NoteEditor.Velocity4", "DefaultButton.On")
+        elif "GREEN" in color_upper or "PLAY" in color_upper or "LIME" in color_upper:
+            self.make_button_blink_oldschool(button, "StepSequencer.NoteEditor.Velocity1", "DefaultButton.On")
+        elif "AMBER" in color_upper or "YELLOW" in color_upper or "ORANGE" in color_upper:
+            self.make_button_blink_oldschool(button, "StepSequencer.NoteEditor.Velocity3", "DefaultButton.On")
+        else:
+            # Default to green blink
+            self.make_button_blink_oldschool(button, "StepSequencer.NoteEditor.Velocity1", "DefaultButton.On")
+
+    def stop_button_blink(self, button, normal_color):
+        """Stop a button from blinking and return it to normal color"""
+        # Use old-school stop method
+        self.stop_button_blink_oldschool(button, normal_color)
+            
+    def toggle_button_blink(self, button, normal_color, is_blinking=False):
+        """Toggle a button between blinking and normal state"""
+        if not button:
+            return False
+            
+        if is_blinking:
+            self.stop_button_blink(button, normal_color)
+            return False
+        else:
+            self.make_button_blink(button, normal_color)
+            return True
+            
+    def _stop_all_blinking(self):
+        """Stop all old-school blinking buttons"""
+        for button in list(self._blinking_buttons.keys()):
+            self.stop_button_blink_oldschool(button, "DefaultButton.Disabled")
 
 # LOCK Button
     def _update_lock_button(self):

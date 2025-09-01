@@ -366,9 +366,10 @@ class Colors:
                 Off = Rgb.AMBER_THIRD
 
         class LoopSelector:
-            SelectedPlaying = Rgb.RED
-            Playing = Rgb.RED_THIRD
+            SelectedPlaying = Rgb.YELLOW
+            Playing = Rgb.YELLOW_HALF
             Selected = Rgb.GREEN
+            SelectedOutOfLoop = Rgb.AMBER_HALF
             InLoop = Rgb.AMBER_THIRD
 
         class Quantization:
