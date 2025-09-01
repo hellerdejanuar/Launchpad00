@@ -489,11 +489,8 @@ class NoteEditorComponent(ControlSurfaceComponent):
 	def _update_velocity_button(self): 
 		if self.is_enabled() and self._velocity_button != None:
 			if self._clip != None:
-				if self._is_velocity_shifted:
-					self._velocity_button.set_on_off_values("StepSequencer.NoteEditor.VelocityShifted")
-					self._velocity_button.turn_on()
-				else:
-					self._velocity_button.set_light("StepSequencer.NoteEditor.Velocity"+str(self._velocity_index))
+				# Always show current velocity color, don't use special "VelocityShifted" state
+				self._velocity_button.set_light("StepSequencer.NoteEditor.Velocity"+str(self._velocity_index))
 			else:
 				self._velocity_button.set_light("DefaultButton.Disabled")
 
