@@ -29,11 +29,11 @@ class LoopSelectorComponent(ControlSurfaceComponent):
         self._loop_point1 = -1
         self._loop_point2 = -1
 
-        self._cache = [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-                       -1, -1]  # Length=16
+        # Cache size should match the number of buttons
+        self._cache = [-1] * len(buttons)
 
         self._buttons = buttons
-        for button in self._buttons:  # iterate 16 buttons of 4x4 lower right matrix section
+        for button in self._buttons:  # iterate loop selector buttons
             assert isinstance(button, ButtonElement)
             button.remove_value_listener(self._loop_button_value)
             button.add_value_listener(self._loop_button_value,
@@ -199,7 +199,7 @@ class LoopSelectorComponent(ControlSurfaceComponent):
         if self.is_enabled():
             self._get_clip_loop()  # gets the loop start/end values from the clip -> self._loop_start & self._loop_end
             i = 0
-            for button in self._buttons:  # iterate 16 buttons of 4x4 lower right matrix section
+            for button in self._buttons:  # iterate loop selector buttons
                 if self._clip == None:  # Disable/turn off all buttons
                     button.set_on_off_values("DefaultButton.Disabled",
                                              "DefaultButton.Disabled")

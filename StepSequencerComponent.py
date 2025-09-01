@@ -66,6 +66,11 @@ class StepSequencerComponent(CompoundComponent):
 
         # displayed Bank
         self._selected_subBank = "A"
+        
+        # Initialize loop selector state early (needed by quantization setup)
+        self._loop_selector_active = False
+        # Store original button assignments for proper disconnect/reconnect
+        self._original_button_assignments = {}
 
         self._beat = 0
         # setup
@@ -93,6 +98,7 @@ class StepSequencerComponent(CompoundComponent):
         self._matrix = None
 
         self._loop_selector = None
+        self._loop_selector_button = None
         self._note_editor = None
         self._note_selector = None
         self._scale_selector = None
@@ -127,13 +133,22 @@ class StepSequencerComponent(CompoundComponent):
         self._last_quantize_button_press = time.time()
         # self.set_quantization_button(self._side_buttons[2])#SndA
 
-    # Set 4x4 lower right matrix section that manages the loop range OK
+    # Set loop selector using side buttons 1-4, activated by holding side button 6
     def _set_loop_selector(self):
         self._loop_selector = self.register_component(
             LoopSelectorComponent(self, [
-            self._side_buttons[1], self._side_buttons[2],self._side_buttons[3], self._side_buttons[4]],
-                                  self._control_surface)
-            )
+                self._side_buttons[1], self._side_buttons[2], 
+                self._side_buttons[3], self._side_buttons[4]
+            ], self._control_surface)
+        )
+        # Loop selector starts disabled - only activated when holding side_button[6]
+        self._loop_selector.set_enabled(False)
+        # Configure blocksize for 4-button layout (each button represents more steps)
+        self._loop_selector.set_blocksize(16)  # 16 steps per button for 4-button layout
+        
+        # Set up loop selector activation button (side_button[6])
+        self._loop_selector_button = None
+        self.set_loop_selector_button(self._side_buttons[6])
             
     #Allow to manipulate the LP grid and Live's Clip notes (add/del, velocity, mute, etc)
     #In charge of refreshing the notes LED matrix
@@ -411,8 +426,12 @@ class StepSequencerComponent(CompoundComponent):
         self._scale_selector.update()
 
     def _update_loop_selector(self):
-        self._loop_selector.set_enabled(self._mode == STEPSEQ_MODE_NORMAL)
-        self._loop_selector.update()
+        # Loop selector is only enabled when explicitly activated via button
+        if self._loop_selector_active and self._mode == STEPSEQ_MODE_NORMAL:
+            self._loop_selector.set_enabled(True)
+            self._loop_selector.update()
+        else:
+            self._loop_selector.set_enabled(False)
 
     def _update_note_selector(self):
         self._note_selector._enable_offset_button = self._mode == STEPSEQ_MODE_NORMAL
@@ -434,6 +453,7 @@ class StepSequencerComponent(CompoundComponent):
         self._update_mode_button()
         self._update_mute_shift_button()
         self._update_scale_selector_button()
+        self._update_loop_selector_button()
         self._update_left_button()
         self._update_right_button()
         if self._track_controller != None:
@@ -834,7 +854,125 @@ class StepSequencerComponent(CompoundComponent):
             self._update_note_selector()
         if self._note_editor != None:
             self._update_note_editor()
-        self._update_OSD()
+
+# LOOP SELECTOR BUTTON
+    def set_loop_selector_button(self, button):
+        assert (isinstance(button, (ButtonElement, type(None))))
+        if (button != self._loop_selector_button):
+            if (self._loop_selector_button != None):
+                self._loop_selector_button.remove_value_listener(self._loop_selector_button_value)
+            self._loop_selector_button = button
+            if (self._loop_selector_button != None):
+                self._loop_selector_button.add_value_listener(self._loop_selector_button_value, identify_sender=True)
+
+    def _loop_selector_button_value(self, value, sender):
+        assert (self._loop_selector_button != None)
+        assert (value in range(128))
+        if self.is_enabled():
+            if value != 0:  # Button pressed - toggle the state
+                self._loop_selector_active = not self._loop_selector_active
+                if self._loop_selector_active:
+                    self._disconnect_side_button_functionality()
+                    self._loop_selector.set_enabled(True)
+                    self._loop_selector.update()  # Force update when enabling
+                else:
+                    self._loop_selector.set_enabled(False)
+                    self._reconnect_side_button_functionality()
+                self._update_loop_selector_button()
+
+    def _update_loop_selector_button(self):
+        if self.is_enabled() and self._loop_selector_button != None:
+            if self._clip != None:
+                if self._loop_selector_active:
+                    # RGB.LIME when loop selector mode is active
+                    self._loop_selector_button.set_light("StepSequencer.NoteEditor.Velocity1")  # Maps to Rgb.LIME
+                else:
+                    # Normal state when inactive but available
+                    self._loop_selector_button.set_light("DefaultButton.On")
+            else:
+                self._loop_selector_button.set_light("DefaultButton.Disabled")
+
+    def _disconnect_side_button_functionality(self):
+        """Disconnect ALL side button functionality when entering loop selector mode"""
+        # Store current assignments and disconnect components from side buttons
+        self._original_button_assignments.clear()
+        
+        # Disconnect track controller from side_button[0] (start/stop)
+        if self._track_controller and hasattr(self._track_controller, '_start_stop_button'):
+            if self._track_controller._start_stop_button:
+                self._original_button_assignments['track_start_stop'] = self._track_controller._start_stop_button
+                self._track_controller.set_start_stop_button(None)
+        
+        # Disconnect note selector from side_button[3] (subBank selector) 
+        if self._note_selector and hasattr(self._note_selector, '_subBank_selector'):
+            if self._note_selector._subBank_selector:
+                self._original_button_assignments['note_subbank'] = self._note_selector._subBank_selector
+                self._note_selector.set_subBank_selector(None)
+        
+        # Disconnect note editor from side_button[5] (velocity button)
+        if self._note_editor and hasattr(self._note_editor, '_velocity_button'):
+            if self._note_editor._velocity_button:
+                self._original_button_assignments['note_velocity'] = self._note_editor._velocity_button
+                self._note_editor.set_velocity_button(None)
+                
+        # Visually disable non-loop buttons
+        if self._side_buttons:
+            for i, button in enumerate(self._side_buttons):
+                # Skip loop selector buttons (1-4) and activation button (6)
+                if button and i not in [1, 2, 3, 4, 6]:
+                    button.set_light("DefaultButton.Disabled")
+
+    def _reconnect_side_button_functionality(self):
+        """Reconnect ALL side button functionality when exiting loop selector mode"""
+        # Restore original button assignments
+        if 'track_start_stop' in self._original_button_assignments:
+            self._track_controller.set_start_stop_button(self._original_button_assignments['track_start_stop'])
+            
+        if 'note_subbank' in self._original_button_assignments:
+            self._note_selector.set_subBank_selector(self._original_button_assignments['note_subbank'])
+            
+        if 'note_velocity' in self._original_button_assignments:
+            self._note_editor.set_velocity_button(self._original_button_assignments['note_velocity'])
+        
+        # Clear stored assignments
+        self._original_button_assignments.clear()
+        
+        # Re-enable all side buttons first and clear any disabled lights
+        if self._side_buttons:
+            for i, button in enumerate(self._side_buttons):
+                if button and i != 6:  # Skip loop selector activation button
+                    button.set_enabled(True)
+                                    # Clear any disabled state lights
+                button.clear_send_cache()
+        
+        # Clear all side button displays
+        self._clear_side_buttons()
+        
+        # Force comprehensive update of all components to restore their button states
+        self._update_buttons()
+        self._update_note_selector()
+        self._update_note_editor()
+        
+        # Explicitly update velocity button 
+        if self._note_editor and hasattr(self._note_editor, '_update_velocity_button'):
+            self._note_editor._update_velocity_button()
+            
+        if self._track_controller:
+            self._track_controller.update()
+        # Force a complete update cycle
+        self.update()
+
+    def _clear_side_buttons(self):
+        """Clear the visual display of all side buttons - reusable function"""
+        # Clear all side buttons by turning them off and resetting their state
+        if self._side_buttons:
+            for i, button in enumerate(self._side_buttons):
+                if button:
+                    # Set to default disabled state to clear any colors/states
+                    button.set_light("DefaultButton.Disabled")
+                    button.turn_off()
+                    # Clear any cached states
+                    button.clear_send_cache()
 
 # LOCK Button
     def _update_lock_button(self):
