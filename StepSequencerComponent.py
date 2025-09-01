@@ -354,7 +354,7 @@ class StepSequencerComponent(CompoundComponent):
         key_is_in_scale = [False, False, False, False]
         if self._note_selector.is_drumrack:
             for i in range(4):  # Only 4 note lanes now
-                keys[i] = self._note_selector.selected_note + i
+                keys[i] = self._note_selector.selected_note + (3 - i)  # Reverse the note order
                 key_is_root_note[i] = (keys[i] + 12 + 16) % 16 == 0
                 key_is_in_scale[i] = (keys[i] + 12 + 16) % 4 == 0
         elif self._note_selector.is_diatonic:
@@ -366,15 +366,17 @@ class StepSequencerComponent(CompoundComponent):
             if(idx == -1):
                 self._control_surface.log_message("not found : " + str(self._note_selector._offset) + " in " + str(self._note_selector._scale))
                 for i in range(4):  # Only 4 note lanes now
-                    keys[i] = self._note_selector._root_note + self._note_selector._offset + i
+                    keys[i] = self._note_selector._root_note + self._note_selector._offset + (3 - i)  # Reverse the note order
             else:
                 for i in range(4):  # Only 4 note lanes now
-                    keys[i] = self._note_selector._root_note + self._note_selector._scale[(i + idx) % self._note_selector._scale_length] + int((i + idx) / self._note_selector._scale_length) * 12
+                    scale_idx = ((3 - i) + idx) % self._note_selector._scale_length  # Reverse the note order
+                    octave_offset = int(((3 - i) + idx) / self._note_selector._scale_length) * 12
+                    keys[i] = self._note_selector._root_note + self._note_selector._scale[scale_idx] + octave_offset
                     key_is_root_note[i] = (keys[i] + 12) % 12 == self._note_selector._key
                     key_is_in_scale[i] = True
         else:
             for i in range(4):  # Only 4 note lanes now
-                keys[i] = self._note_selector.selected_note + i
+                keys[i] = self._note_selector.selected_note + (3 - i)  # Reverse the note order
                 key_is_root_note[i] = (keys[i] + 12) % 12 == self._note_selector._key
                 key_is_in_scale[i] = (keys[i] - self._note_selector._key + 12) % 12 in self._note_selector._scale
                 
