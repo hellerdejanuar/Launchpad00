@@ -125,7 +125,7 @@ class NoteSelectorComponent(ControlSurfaceComponent):
                     self._subBank_selector.set_on_off_values("DefaultButton.Disabled", "DefaultButton.Disabled")
                     self._subBank_selector.turn_off()
                 else:
-                    self._subBank_selector.set_on_off_values("StepSequencer.SubBankSelector.A", "StepSequencer.SubBankSelector.B")
+                    self._subBank_selector.set_on_off_values("StepSequencer.SubBankSelector.B", "StepSequencer.SubBankSelector.A")
                     if self.should_change_bank():
                         if self._step_sequencer._selected_subBank == "A":
                             self._subBank_selector.turn_on()
