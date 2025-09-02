@@ -12,6 +12,7 @@ except ImportError:
     imap=map
 from .NoteEditorComponent import NoteEditorComponent
 from .TrackControllerComponent import TrackControllerComponent
+from .Log import log
 import time
 from .ScaleComponent import ScaleComponent, MUSICAL_MODES, KEY_NAMES
 try:
@@ -1003,6 +1004,87 @@ class StepSequencerComponent(CompoundComponent):
                     # Clear any cached states
                     button.clear_send_cache()
 
+    def _disengage_side_buttons(self, buttons_to_ignore=None):
+        """
+        Disconnect and visually disable side buttons except for specified buttons to ignore
+        
+        Args:
+            buttons_to_ignore (list): List of button indices to keep active/ignore (e.g., [5] for velocity mode)
+        """
+        if buttons_to_ignore is None:
+            buttons_to_ignore = []
+            
+        # Store current assignments and disconnect components from side buttons
+        if not hasattr(self, '_temp_button_assignments'):
+            self._temp_button_assignments = {}
+        self._temp_button_assignments.clear()
+        
+        # Define button mappings: index -> (component, attribute_name, setter_method, assignment_key)
+        button_mappings = {
+            0: (self._track_controller, '_start_stop_button', 'set_start_stop_button', 'start_stop_button'),
+            1: (self, '_lock_button', 'set_lock_button', 'lock_button'),
+            2: (None, None, None, 'quantization_button'),  # Usually unassigned (was quantization)
+            3: (self._note_selector, '_subBank_selector', 'set_subBank_selector', 'note_subbank'),
+            4: (None, None, None, 'scale_selector_button'),  # Usually unassigned (was scale selector)
+            5: (self._note_editor, '_velocity_button', 'set_velocity_button', 'note_velocity'),
+            6: (self, '_loop_selector_button', 'set_loop_selector_button', 'loop_selector_button'),
+            7: (None, None, None, 'mute_shift_button'),  # Usually unassigned (was mute shift)
+        }
+        
+        # Loop through and disconnect buttons that are not ignored
+        for button_index, (component, attribute, setter, key) in button_mappings.items():
+            if button_index not in buttons_to_ignore:
+                if component and hasattr(component, attribute):
+                    button_obj = getattr(component, attribute)
+                    if button_obj:
+                        self._temp_button_assignments[key] = button_obj
+                        getattr(component, setter)(None)
+                
+        # Visually disable all buttons except those in buttons_to_ignore
+        if self._side_buttons:
+            for i, button in enumerate(self._side_buttons):
+                if button and i not in buttons_to_ignore:
+                    button.set_light("DefaultButton.Disabled")
+
+    def _engage_side_buttons(self):
+        """
+        Reconnect side button functionality that was previously disengaged
+        """
+        if not hasattr(self, '_temp_button_assignments'):
+            return
+            
+        # Define restoration mappings: assignment_key -> (component, setter_method)
+        restore_mappings = {
+            'start_stop_button': (self._track_controller, 'set_start_stop_button'),
+            'lock_button': (self, 'set_lock_button'),
+            'quantization_button': (None, None),  # Usually unassigned
+            'note_subbank': (self._note_selector, 'set_subBank_selector'),
+            'scale_selector_button': (None, None),  # Usually unassigned
+            'note_velocity': (self._note_editor, 'set_velocity_button'),
+            'loop_selector_button': (self, 'set_loop_selector_button'),
+            'mute_shift_button': (None, None),  # Usually unassigned
+        }
+        
+        # Loop through and restore button assignments
+        for key, (component, setter) in restore_mappings.items():
+            if key in self._temp_button_assignments and component:
+                getattr(component, setter)(self._temp_button_assignments[key])
+            
+        # Clear the assignments
+        self._temp_button_assignments.clear()
+        
+        # Force comprehensive refresh
+        self._update_buttons()
+
+    def _disconnect_side_button_functionality_for_velocity(self):
+        """Disconnect side button functionality when entering velocity mode (except velocity button itself)"""
+        # Use the generic function, ignoring only the velocity button (index 5)
+        self._disengage_side_buttons(buttons_to_ignore=[5])
+
+    def _reconnect_side_button_functionality_for_velocity(self):
+        """Reconnect side button functionality when exiting velocity mode"""
+        self._engage_side_buttons()
+
     def _clear_top_buttons(self):
         """Clear the visual display of all top buttons - reusable function"""
         # Clear all top buttons by turning them off and resetting their state
@@ -1094,7 +1176,7 @@ class StepSequencerComponent(CompoundComponent):
                     if should_disable:
                         button.set_light("DefaultButton.Disabled")
 
-    def make_button_blink_oldschool(self, button, bright_color="StepSequencer.NoteEditor.Velocity1", dim_color="DefaultButton.On"):
+    def make_button_blink_oldschool(self, button, bright_color="StepSequencer.NoteEditor.Velocity0", dim_color="DefaultButton.On"):
         """Old-school blinking: manually toggle between two colors using timed callbacks"""
         if not button:
             return

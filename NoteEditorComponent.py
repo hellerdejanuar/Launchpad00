@@ -538,6 +538,14 @@ class NoteEditorComponent(ControlSurfaceComponent):
 				self._update_matrix()
 			self._stepsequencer._note_selector.update()
 			
+					# Handle side button disconnection/reconnection for velocity mode (like loop selector)
+		if ((value is not 0) or (not sender.is_momentary())):
+			# Button pressed - disconnect other side button functionality
+			self._stepsequencer._disconnect_side_button_functionality_for_velocity()
+		else:
+			# Button released - reconnect other side button functionality
+			self._stepsequencer._reconnect_side_button_functionality_for_velocity()
+
 #*********************MUTE/BTN_SHIFT*********************
 
 	# Mute all entries for a given MIDI note OK
