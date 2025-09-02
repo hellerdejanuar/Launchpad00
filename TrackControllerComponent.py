@@ -30,6 +30,8 @@ class TrackControllerComponent(MixerComponent):
 		self._control_surface = control_surface
 		self._implicit_arm = implicit_arm
 		self._skin_name = skin_name
+		# Callback for creating clips when slot is empty
+		self._create_clip_callback = None
 		MixerComponent.__init__(self, 1)
 		self.set_enabled(enabled)
 
@@ -53,8 +55,13 @@ class TrackControllerComponent(MixerComponent):
 		self.set_session_record_button(None)
 		self.set_solo_button(None)
 		self.set_arm_button(None)
+		self._create_clip_callback = None
 
 		MixerComponent.disconnect(self)
+
+	def set_create_clip_callback(self, callback):
+		"""Set a callback function to be called when creating clips in empty slots"""
+		self._create_clip_callback = callback
 
 	def set_enabled(self, enabled):
 		if self.is_enabled and not enabled:
@@ -335,15 +342,35 @@ class TrackControllerComponent(MixerComponent):
 							slot = self.selected_scene.clip_slots[self.selected_track_idx]
 						except TypeError:
 							pass
-						if slot is not None and slot and slot.has_clip:
-							if slot.is_triggered or slot.is_playing:
-								slot.stop()
-								self._start_stop_button.turn_off()
-								self._control_surface.show_message("stop clip")
+						if slot is not None and slot:
+							if slot.has_clip:
+								# Check if Live's transport is NOT playing
+								if hasattr(self._control_surface, 'song') and not self._control_surface.song().is_playing:
+									# Transport is not playing - always fire the clip
+									slot.fire()
+									self._start_stop_button.turn_on()
+									self._control_surface.show_message("fire clip")
+								else:
+									# Transport is playing - normal play/stop behavior
+									if slot.is_triggered or slot.is_playing:
+										slot.stop()
+										self._start_stop_button.turn_off()
+										self._control_surface.show_message("stop clip")
+									else:
+										slot.fire()
+										self._start_stop_button.turn_on()
+										self._control_surface.show_message("fire clip")
 							else:
-								slot.fire()
-								self._start_stop_button.turn_on()
-								self._control_surface.show_message("fire clip")
+								# No clip in slot - create one if callback is available
+								if self._create_clip_callback is not None:
+									self._create_clip_callback()
+									self._control_surface.show_message("created clip")
+								else:
+									# Fallback: create a basic 1 bar clip directly
+									slot.create_clip(4.0)  # Create 1 bar (4 beats) clip
+									slot.fire()
+									self._start_stop_button.turn_on()
+									self._control_surface.show_message("created and fired clip")
 								
 	def _mute_value(self, value):
 		assert (self._mute_button != None)

@@ -179,6 +179,8 @@ class StepSequencerComponent(CompoundComponent):
         self._track_controller.set_next_track_button(self._top_buttons[3])
         # Add play/stop functionality to first side button (was scale button): FLO
         self._track_controller.set_start_stop_button(self._side_buttons[0])
+        # Set callback for creating clips when slot is empty
+        self._track_controller.set_create_clip_callback(self.create_clip_for_selected_slot)
 
     def _set_scale_selector(self):
         self._scale_selector = self.register_component(ScaleComponent(self._control_surface))
@@ -1334,6 +1336,25 @@ class StepSequencerComponent(CompoundComponent):
                 clip_slot.fire()
                 self.on_clip_slot_changed()
                 self.update()
+
+    def create_clip_for_selected_slot(self):
+        """Create a clip in the currently selected track and scene"""
+        if self.song().view.selected_track != None and self.song().view.selected_scene != None:
+            track = self.song().view.selected_track
+            scene = self.song().view.selected_scene
+            try:
+                scene_index = list(self.song().scenes).index(scene)
+                clip_slot = track.clip_slots[scene_index]
+                if not clip_slot.has_clip:
+                    # Create 1 bar (4 beats) clip by default
+                    clip_slot.create_clip(4.0)
+                    self._detect_scale_mode()
+                    clip_slot.fire()
+                    self.on_clip_slot_changed()
+                    self.update()
+            except (ValueError, IndexError):
+                # Fallback if scene/track not found
+                pass
 
     def duplicate_clip(self):
         if self._clip_slot and self._clip_slot.has_clip:
