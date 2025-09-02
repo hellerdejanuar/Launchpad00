@@ -76,6 +76,10 @@ class StepSequencerComponent(CompoundComponent):
         self._loop_selector_active = False
         # Store original button assignments for proper disconnect/reconnect
         self._original_button_assignments = {}
+        
+        # Initialize velocity button listeners tracking
+        self._velocity_button_listeners = {}
+        self._velocity_listeners_added = False
 
         self._beat = 0
         # setup
@@ -93,6 +97,10 @@ class StepSequencerComponent(CompoundComponent):
         # self.on_clip_slot_changed()
 
     def disconnect(self):
+        # Clean up velocity listeners if they exist
+        if hasattr(self, '_velocity_listeners_added') and self._velocity_listeners_added:
+            self._remove_velocity_side_button_listeners()
+            
         self._clip = None
 
         self._lock_button = None
@@ -1076,13 +1084,102 @@ class StepSequencerComponent(CompoundComponent):
         # Force comprehensive refresh
         self._update_buttons()
 
+    def _update_velocity_side_button_colors(self):
+        """Set velocity colors on side buttons 0-4 when in velocity mode"""
+        if self._side_buttons:
+            # Velocity colors in reverse order: button 0=Velocity4, button 1=Velocity3, ..., button 4=Velocity0
+            velocity_colors = [
+                "StepSequencer.NoteEditor.Velocity4",  # side_button[0]
+                "StepSequencer.NoteEditor.Velocity3",  # side_button[1]
+                "StepSequencer.NoteEditor.Velocity2",  # side_button[2]
+                "StepSequencer.NoteEditor.Velocity1",  # side_button[3]
+                "StepSequencer.NoteEditor.Velocity0"   # side_button[4]
+            ]
+            
+            for i in range(5):  # buttons 0-4
+                if i < len(self._side_buttons) and self._side_buttons[i]:
+                    self._side_buttons[i].set_light(velocity_colors[i])
+
+    def _clear_velocity_side_button_colors(self):
+        """Clear velocity colors from side buttons 0-4 when exiting velocity mode"""
+        if self._side_buttons:
+            for i in range(5):  # buttons 0-4
+                if i < len(self._side_buttons) and self._side_buttons[i]:
+                    # Clear to disabled state to prepare for normal functionality restoration
+                    self._side_buttons[i].set_light("DefaultButton.Disabled")
+                    # Also clear any cached button state
+                    self._side_buttons[i].clear_send_cache()
+
+    def _setup_velocity_side_button_listeners(self):
+        """Add velocity selection listeners to side buttons 0-4"""
+        if not hasattr(self, '_velocity_button_listeners'):
+            self._velocity_button_listeners = {}
+            
+        if self._side_buttons:
+            for i in range(5):  # buttons 0-4
+                if i < len(self._side_buttons) and self._side_buttons[i]:
+                    # Create a proper listener function for each button
+                    velocity_index = 4 - i  # button 0=velocity4, button 4=velocity0
+                    
+                    def create_velocity_listener(vel_idx):
+                        return lambda value, sender: self._velocity_side_button_value(value, sender, vel_idx)
+                    
+                    listener = create_velocity_listener(velocity_index)
+                    self._velocity_button_listeners[i] = listener
+                    
+                    # Add velocity selection listener
+                    self._side_buttons[i].add_value_listener(listener, identify_sender=True)
+
+    def _remove_velocity_side_button_listeners(self):
+        """Remove velocity selection listeners from side buttons 0-4"""
+        if hasattr(self, '_velocity_button_listeners') and self._velocity_button_listeners:
+            if self._side_buttons:
+                for i in range(5):  # buttons 0-4
+                    if (i < len(self._side_buttons) and self._side_buttons[i] and 
+                        i in self._velocity_button_listeners):
+                        try:
+                            # Remove the specific listener
+                            self._side_buttons[i].remove_value_listener(self._velocity_button_listeners[i])
+                        except (ValueError, RuntimeError):
+                            # Listener might already be removed, ignore
+                            pass
+                        del self._velocity_button_listeners[i]
+            # Clear the dictionary completely
+            self._velocity_button_listeners.clear()
+        
+        # Reset the flag regardless
+        self._velocity_listeners_added = False
+
+    def _velocity_side_button_value(self, value, sender, velocity_index):
+        """Handle velocity selection from side buttons 0-4"""
+        if value != 0 and self.is_enabled() and self._note_editor and self._note_editor._velocity_mode_active:
+            # Set the velocity index (0-4 maps to velocity levels)
+            self._note_editor._velocity_index = velocity_index
+            self._note_editor._velocity = self._note_editor.velocity_map[velocity_index]
+            # Update the main velocity button to show the new selection
+            self._note_editor._update_velocity_button()
+            # Optionally show a message
+            velocity_names = ["Low", "Med-Low", "Medium", "Med-High", "High"]
+            if velocity_index < len(velocity_names):
+                self._control_surface.show_message(f"Velocity: {velocity_names[velocity_index]}")
+
     def _disconnect_side_button_functionality_for_velocity(self):
         """Disconnect side button functionality when entering velocity mode (except velocity button itself)"""
         # Use the generic function, ignoring only the velocity button (index 5)
         self._disengage_side_buttons(buttons_to_ignore=[5])
+        # Set velocity colors on side buttons 0-4 (Velocity4 to Velocity0 in reverse order)
+        self._update_velocity_side_button_colors()
+        # Add velocity selection listeners to side buttons 0-4
+        self._setup_velocity_side_button_listeners()
+        self._velocity_listeners_added = True
 
     def _reconnect_side_button_functionality_for_velocity(self):
         """Reconnect side button functionality when exiting velocity mode"""
+        # Immediately remove velocity selection listeners first
+        self._remove_velocity_side_button_listeners()
+        # Clear velocity colors immediately
+        self._clear_velocity_side_button_colors()
+        # Then restore normal functionality
         self._engage_side_buttons()
 
     def _clear_top_buttons(self):
