@@ -169,16 +169,18 @@ class StepSequencerComponent(CompoundComponent):
     #Display page indicator for multinote mode    
     def _set_note_editor(self): 
         self._note_editor = self.register_component(NoteEditorComponent(self, self._matrix, self._control_surface))
+
         velocity_button_handler = ButtonPressHandler(
             self._side_buttons[5],
             press_fn=self._note_editor._enable_velocity_mode,
             release_fn=self._note_editor._disable_velocity_mode,
-            hold_fn=self._note_editor._enable_velocity_mode,
+            hold_fn=None,
             hold_release_fn=None,
             combo_press_fn=None,
             combo_release_fn=self._note_editor._disable_velocity_mode,
             combo_press_listeners=self._side_buttons
         )
+
         self._note_editor.set_velocity_button(velocity_button_handler)
 
     #Set 4x4 lower left matrix section that allows note selection in Normal Mode
@@ -966,6 +968,25 @@ class StepSequencerComponent(CompoundComponent):
                 if button and i not in [0, 1, 2, 3, 4, 6]:
                     button.set_light("DefaultButton.Disabled")
 
+    def _disconnect_side_button_functionality_for_velocity(self):
+        """Disconnect side button functionality when entering velocity mode (except velocity button itself)"""
+        # Use the generic function, ignoring only the velocity button (index 5)
+        self._disengage_side_buttons(buttons_to_ignore=[5])
+        # Set velocity colors on side buttons 0-4 (Velocity4 to Velocity0 in reverse order)
+        self._update_velocity_side_button_colors()
+        # Add velocity selection listeners to side buttons 0-4
+        self._setup_velocity_side_button_listeners()
+        self._velocity_listeners_added = True
+
+    def _reconnect_side_button_functionality_for_velocity(self):
+        """Reconnect side button functionality when exiting velocity mode"""
+        # Immediately remove velocity selection listeners first
+        self._remove_velocity_side_button_listeners()
+        # Clear velocity colors immediately
+        self._clear_velocity_side_button_colors()
+        # Then restore normal functionality
+        self._engage_side_buttons()
+
     def _reconnect_side_button_functionality(self):
         """Reconnect side button functionality when exiting loop selector mode"""
         # Restore NoteEditor MAIN button assignments
@@ -1173,25 +1194,6 @@ class StepSequencerComponent(CompoundComponent):
             velocity_names = ["Low", "Med-Low", "Medium", "Med-High", "High"]
             if velocity_index < len(velocity_names):
                 self._control_surface.show_message(f"Velocity: {velocity_names[velocity_index]}")
-
-    def _disconnect_side_button_functionality_for_velocity(self):
-        """Disconnect side button functionality when entering velocity mode (except velocity button itself)"""
-        # Use the generic function, ignoring only the velocity button (index 5)
-        self._disengage_side_buttons(buttons_to_ignore=[5])
-        # Set velocity colors on side buttons 0-4 (Velocity4 to Velocity0 in reverse order)
-        self._update_velocity_side_button_colors()
-        # Add velocity selection listeners to side buttons 0-4
-        self._setup_velocity_side_button_listeners()
-        self._velocity_listeners_added = True
-
-    def _reconnect_side_button_functionality_for_velocity(self):
-        """Reconnect side button functionality when exiting velocity mode"""
-        # Immediately remove velocity selection listeners first
-        self._remove_velocity_side_button_listeners()
-        # Clear velocity colors immediately
-        self._clear_velocity_side_button_colors()
-        # Then restore normal functionality
-        self._engage_side_buttons()
 
     def _clear_top_buttons(self):
         """Clear the visual display of all top buttons - reusable function"""
