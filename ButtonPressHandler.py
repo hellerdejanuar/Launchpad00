@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from .ConfigurableButtonElement import ConfigurableButtonElement
+from .Log import log
 from _Framework.ButtonElement import ButtonElement
 from _Framework.InputControlElement import *
 from threading import Timer
@@ -9,21 +11,41 @@ class ButtonPressHandler(ButtonElement):
     A middleware class to handle different button gestures: press, release, hold, hold_release.
     """
 
-    def __init__(self, mode_button, press_fn, release_fn, hold_fn, hold_release_fn, force_hold_listeners=None, *a, **k):
+    def __init__(self, 
+                 mode_button, 
+                 press_fn = None, 
+                 release_fn = None, 
+                 hold_fn = None, 
+                 hold_release_fn = None, 
+                 combo_press_fn = None,
+                 combo_release_fn = None,
+                 hold_time = 1.0,
+                 combo_press_listeners=[], *a, **k):
         super(ButtonPressHandler, self).__init__(True, MIDI_NOTE_TYPE, 0, 0, *a, **k)
         self.mode_button = mode_button
         self.press_fn = press_fn
         self.release_fn = release_fn
         self.hold_fn = hold_fn
         self.hold_release_fn = hold_release_fn
-        self.force_hold_listeners = force_hold_listeners or []
+        self.combo_press_fn = combo_press_fn
+        self.combo_release_fn = combo_release_fn
+
+        if combo_press_listeners:
+            self.combo_press_listeners = list(combo_press_listeners)
+
+        log("combo_press_listeners: " + str(self.combo_press_listeners))
 
         self._hold_timer = None
+        self._hold_time = hold_time
         self._is_held = False
+        self._is_combo = False
 
         self.mode_button.add_value_listener(self._button_value_changed)
-        for listener in self.force_hold_listeners:
-            listener.add_value_listener(self._force_hold_value_changed)
+        if self.mode_button in self.combo_press_listeners:
+            self.combo_press_listeners.remove(self.mode_button)
+            
+        for listener in self.combo_press_listeners:
+            listener.add_value_listener(self._combo_press_value_changed)
 
     def _button_value_changed(self, value):
         if value:
@@ -31,22 +53,31 @@ class ButtonPressHandler(ButtonElement):
             if self.press_fn:
                 self.press_fn()
         else:
-            if self._is_held:
+            if self._is_combo: # Handle Combo Release
+                if self.combo_release_fn:
+                    self.combo_release_fn()
+                self._is_combo = False
+
+            elif self._is_held: # Handle Hold Release
                 if self.hold_release_fn:
                     self.hold_release_fn()
                 self._is_held = False
+
             else:
                 if self.release_fn:
                     self.release_fn()
             self._cancel_hold_timer()
 
-    def _force_hold_value_changed(self, value):
+    def _combo_press_value_changed(self, value):
         if value and self.mode_button.is_pressed():
-            self._hold()
+            self._cancel_hold_timer()
+            self._is_held = False
+            self._is_combo = True
+
 
     def _start_hold_timer(self):
         self._cancel_hold_timer()
-        self._hold_timer = Timer(0.7, self._hold)
+        self._hold_timer = Timer(self._hold_time, self._hold)
         self._hold_timer.start()
 
     def _cancel_hold_timer(self):
@@ -63,7 +94,7 @@ class ButtonPressHandler(ButtonElement):
 
     def disconnect(self):
         self.mode_button.remove_value_listener(self._button_value_changed)
-        for listener in self.force_hold_listeners:
-            listener.remove_value_listener(self._force_hold_value_changed)
+        for listener in self.combo_press_listeners:
+            listener.remove_value_listener(self._combo_press_value_changed)
         self._cancel_hold_timer()
         super(ButtonPressHandler, self).disconnect()
