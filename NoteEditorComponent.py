@@ -507,44 +507,35 @@ class NoteEditorComponent(ControlSurfaceComponent):
 			
 	# Handle button shifted and velocity selection OK			
 	def _velocity_value(self, value, sender): 
-		assert (self._velocity_button != None)
-		assert (value in range(128))
+		pass
 
-		if self.is_enabled():
-			if ((value is 0) or (not sender.is_momentary())):
-				# button released, check if was used to modify notes or just to cycle thru velocity values
+	def _enable_velocity_mode(self):
+		self._velocity_notes_pressed = 0
+		self._is_velocity_shifted = True
+		self._velocity_mode_active = True
+		#While velocity is pressed, can play sounds using notes region-- Maybe a clash with velocity mode
+		self._stepsequencer._track_controller._implicit_arm = True #Arm the track to force play MIDI notes
+		self._stepsequencer._track_controller._do_implicit_arm(True)
+		self._velocity_last_press = time.time()
+		self._update_velocity_button()
+		self._update_matrix()
+		self._stepsequencer._note_selector.update()
+		self._stepsequencer._disconnect_side_button_functionality_for_velocity()
 
-				if self._velocity_notes_pressed == 0 and time.time() - self._velocity_last_press < self.long_button_press:
-					# cycle thru velocities
-					self._velocity_index = (len(self.velocity_map) + self._velocity_index + 1) % len(self.velocity_map)
-					self._velocity = self.velocity_map[self._velocity_index]
-				self._stepsequencer._track_controller._implicit_arm = False
-				if self._is_velocity_shifted:
-					self._stepsequencer._track_controller._do_implicit_arm(False)
-				self._is_velocity_shifted = False
-				self._velocity_mode_active = False
-				self._update_velocity_button()
-				self._update_matrix()
-			if ((value is not 0) or (not sender.is_momentary())):
-				# button pressed
-				self._velocity_notes_pressed = 0
-				self._is_velocity_shifted = True
-				self._velocity_mode_active = True
-				#While velocity is pressed, can play sounds using notes region-- Maybe a clash with velocity mode
-				self._stepsequencer._track_controller._implicit_arm = True #Arm the track to force play MIDI notes
-				self._stepsequencer._track_controller._do_implicit_arm(True)
-				self._velocity_last_press = time.time()
-				self._update_velocity_button()
-				self._update_matrix()
-			self._stepsequencer._note_selector.update()
-			
-					# Handle side button disconnection/reconnection for velocity mode (like loop selector)
-		if ((value is not 0) or (not sender.is_momentary())):
-			# Button pressed - disconnect other side button functionality
-			self._stepsequencer._disconnect_side_button_functionality_for_velocity()
-		else:
-			# Button released - reconnect other side button functionality
-			self._stepsequencer._reconnect_side_button_functionality_for_velocity()
+	def _disable_velocity_mode(self):
+		if self._velocity_notes_pressed == 0 and time.time() - self._velocity_last_press < self.long_button_press:
+			# cycle thru velocities
+			self._velocity_index = (len(self.velocity_map) + self._velocity_index + 1) % len(self.velocity_map)
+			self._velocity = self.velocity_map[self._velocity_index]
+		self._stepsequencer._track_controller._implicit_arm = False
+		if self._is_velocity_shifted:
+			self._stepsequencer._track_controller._do_implicit_arm(False)
+		self._is_velocity_shifted = False
+		self._velocity_mode_active = False
+		self._update_velocity_button()
+		self._update_matrix()
+		self._stepsequencer._note_selector.update()
+		self._stepsequencer._reconnect_side_button_functionality_for_velocity()
 
 #*********************MUTE/BTN_SHIFT*********************
 

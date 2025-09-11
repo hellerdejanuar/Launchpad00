@@ -4,6 +4,7 @@ from .LoopSelectorComponent import LoopSelectorComponent
 from .NoteSelectorComponent import NoteSelectorComponent
 from _Framework.CompoundComponent import CompoundComponent
 from _Framework.ButtonElement import ButtonElement
+from .ButtonPressHandler import ButtonPressHandler
 from _Framework.Util import find_if
 try:
     from itertools import imap
@@ -168,7 +169,14 @@ class StepSequencerComponent(CompoundComponent):
     #Display page indicator for multinote mode    
     def _set_note_editor(self): 
         self._note_editor = self.register_component(NoteEditorComponent(self, self._matrix, self._control_surface))
-        self._note_editor.set_velocity_button(self._side_buttons[5]) # Label: Trk On 
+        velocity_button_handler = ButtonPressHandler(
+            self._side_buttons[5],
+            press_fn=self._note_editor._enable_velocity_mode,
+            release_fn=self._note_editor._disable_velocity_mode,
+            hold_fn=self._note_editor._enable_velocity_mode,
+            hold_release_fn=None
+        )
+        self._note_editor.set_velocity_button(velocity_button_handler)
 
     #Set 4x4 lower left matrix section that allows note selection in Normal Mode
     def _set_note_selector(self):
@@ -1354,40 +1362,6 @@ class StepSequencerComponent(CompoundComponent):
         if button:
             button.set_light(final_color)
 
-    def make_button_blink(self, button, color_name=""):
-        """Make a button blink - falls back to old-school method"""
-        if not button:
-            return
-            
-        # Use old-school blinking for reliability
-        color_upper = color_name.upper()
-        if "RED" in color_upper or "RECORD" in color_upper:
-            self.make_button_blink_oldschool(button, "StepSequencer.NoteEditor.Velocity4", "DefaultButton.On")
-        elif "GREEN" in color_upper or "PLAY" in color_upper or "LIME" in color_upper:
-            self.make_button_blink_oldschool(button, "StepSequencer.NoteEditor.Velocity1", "DefaultButton.On")
-        elif "AMBER" in color_upper or "YELLOW" in color_upper or "ORANGE" in color_upper:
-            self.make_button_blink_oldschool(button, "StepSequencer.NoteEditor.Velocity3", "DefaultButton.On")
-        else:
-            # Default to green blink
-            self.make_button_blink_oldschool(button, "StepSequencer.NoteEditor.Velocity1", "DefaultButton.On")
-
-    def stop_button_blink(self, button, normal_color):
-        """Stop a button from blinking and return it to normal color"""
-        # Use old-school stop method
-        self.stop_button_blink_oldschool(button, normal_color)
-            
-    def toggle_button_blink(self, button, normal_color, is_blinking=False):
-        """Toggle a button between blinking and normal state"""
-        if not button:
-            return False
-            
-        if is_blinking:
-            self.stop_button_blink(button, normal_color)
-            return False
-        else:
-            self.make_button_blink(button, normal_color)
-            return True
-            
     def _stop_all_blinking(self):
         """Stop all old-school blinking buttons"""
         for button in list(self._blinking_buttons.keys()):
@@ -1550,5 +1524,3 @@ class StepSequencerComponent(CompoundComponent):
                 pass
             except RuntimeError:
                 pass
-
-    
