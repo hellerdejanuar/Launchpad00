@@ -23,17 +23,15 @@ class ButtonPressHandler(ButtonElement):
                  combo_press_listeners=[], *a, **k):
         super(ButtonPressHandler, self).__init__(True, MIDI_NOTE_TYPE, 0, 0, *a, **k)
         self.mode_button = mode_button
-        self.press_fn = press_fn
-        self.release_fn = release_fn
-        self.hold_fn = hold_fn
-        self.hold_release_fn = hold_release_fn
-        self.combo_press_fn = combo_press_fn
-        self.combo_release_fn = combo_release_fn
+        self.press_fn = press_fn if isinstance(press_fn, list) else [press_fn]       
+        self.release_fn = release_fn if isinstance(release_fn, list) else [release_fn]
+        self.hold_fn = hold_fn if isinstance(hold_fn, list) else [hold_fn]
+        self.hold_release_fn = hold_release_fn if isinstance(hold_release_fn, list) else [hold_release_fn]
+        self.combo_press_fn = combo_press_fn if isinstance(combo_press_fn, list) else [combo_press_fn]
+        self.combo_release_fn = combo_release_fn if isinstance(combo_release_fn, list) else [combo_release_fn]
 
         if combo_press_listeners:
             self.combo_press_listeners = list(combo_press_listeners)
-
-        log("combo_press_listeners: " + str(self.combo_press_listeners))
 
         self._hold_timer = None
         self._hold_time = hold_time
@@ -48,24 +46,26 @@ class ButtonPressHandler(ButtonElement):
             listener.add_value_listener(self._combo_press_value_changed)
 
     def _button_value_changed(self, value):
-        if value:
+        log(f"BUTTON VALUE CHANGED: {str(value)} / IS_HELD:{str(self._is_held)} / IS_COMBO:{str(self._is_combo)} ")
+        if value is 127:
+            self._is_held = False  
             self._start_hold_timer()
-            if self.press_fn:
-                self.press_fn()
+            for func in self.press_fn: func()
         else:
             if self._is_combo: # Handle Combo Release
-                if self.combo_release_fn:
-                    self.combo_release_fn()
+                for func in self.combo_release_fn: func()
                 self._is_combo = False
 
             elif self._is_held: # Handle Hold Release
-                if self.hold_release_fn:
-                    self.hold_release_fn()
-                self._is_held = False
+                log("HELD RELESE")
+                for func in self.hold_release_fn: func()
+                self._is_held = False   
+            else: # Handle Button Release
+                log(" RELESE")
+                for func in self.release_fn: func()
+                self._is_held = False                
 
-            else:
-                if self.release_fn:
-                    self.release_fn()
+
             self._cancel_hold_timer()
 
     def _combo_press_value_changed(self, value):
@@ -76,6 +76,7 @@ class ButtonPressHandler(ButtonElement):
 
 
     def _start_hold_timer(self):
+        log("Timer...")
         self._cancel_hold_timer()
         self._hold_timer = Timer(self._hold_time, self._hold)
         self._hold_timer.start()

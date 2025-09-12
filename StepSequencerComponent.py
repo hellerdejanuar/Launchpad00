@@ -173,7 +173,8 @@ class StepSequencerComponent(CompoundComponent):
         velocity_button_handler = ButtonPressHandler(
             self._side_buttons[5],
             press_fn=self._note_editor._enable_velocity_mode,
-            release_fn=self._note_editor._disable_velocity_mode,
+            release_fn=[self._note_editor._cycle_thru_velocities, 
+                        self._note_editor._disable_velocity_mode],
             hold_fn=None,
             hold_release_fn=None,
             combo_press_fn=None,

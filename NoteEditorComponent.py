@@ -21,7 +21,7 @@ class NoteEditorComponent(ControlSurfaceComponent):
 		self._current_page = -1
 		# Normal Color map.
 		self.lanes_color_map = "StepSequencer.NoteEditor.LanesColorMap"
-		# Velocity color map. this must remain of length 3. WHY???
+		# Velocity color map. this must remain of length 3. 
 		self.velocity_map = [20, 50, 80, 105, 127]
 		self.velocity_color_map = [	"StepSequencer.NoteEditor.Velocity0", "StepSequencer.NoteEditor.Velocity1", "StepSequencer.NoteEditor.Velocity2", "StepSequencer.NoteEditor.Velocity3", "StepSequencer.NoteEditor.Velocity4"]
 		
@@ -510,6 +510,9 @@ class NoteEditorComponent(ControlSurfaceComponent):
 		pass
 
 	def _enable_velocity_mode(self):
+		if self._velocity_mode_active:
+			return
+		# code to enable velocity mode
 		self._velocity_notes_pressed = 0
 		self._is_velocity_shifted = True
 		self._velocity_mode_active = True
@@ -522,11 +525,21 @@ class NoteEditorComponent(ControlSurfaceComponent):
 		self._stepsequencer._note_selector.update()
 		self._stepsequencer._disconnect_side_button_functionality_for_velocity()
 
+	def _cycle_thru_velocities(self):
+		"""
+		Cycle through available note velocities. This is done when the velocity button is short-pressed AND not in velocity mode.
+		"""
+		if self._velocity_mode_active:
+			return
+		log("Cycle through velocities")
+		self._velocity_index = (len(self.velocity_map) + self._velocity_index + 1) % len(self.velocity_map)
+		self._velocity = self.velocity_map[self._velocity_index]
+
+
 	def _disable_velocity_mode(self):
-		if self._velocity_notes_pressed == 0 and time.time() - self._velocity_last_press < self.long_button_press:
-			# cycle thru velocities
-			self._velocity_index = (len(self.velocity_map) + self._velocity_index + 1) % len(self.velocity_map)
-			self._velocity = self.velocity_map[self._velocity_index]
+		if not self._velocity_mode_active:
+			return
+		self._velocity_mode_active = False
 		self._stepsequencer._track_controller._implicit_arm = False
 		if self._is_velocity_shifted:
 			self._stepsequencer._track_controller._do_implicit_arm(False)
