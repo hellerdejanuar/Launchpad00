@@ -182,7 +182,7 @@ class StepSequencerComponent(CompoundComponent):
             combo_press_listeners=self._side_buttons
         )
 
-        self._note_editor.set_velocity_button(velocity_button_handler)
+        self._note_editor.set_velocity_button(self._side_buttons[5])
 
     #Set 4x4 lower left matrix section that allows note selection in Normal Mode
     def _set_note_selector(self):

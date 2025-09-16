@@ -87,6 +87,7 @@ class ButtonPressHandler(ButtonElement):
             self._hold_timer = None
 
     def _hold(self):
+        log("HOLD()")
         if self.mode_button.is_pressed():
             self._is_held = True
             if self.hold_fn:

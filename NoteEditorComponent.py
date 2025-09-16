@@ -504,6 +504,7 @@ class NoteEditorComponent(ControlSurfaceComponent):
 			if (self._velocity_button != None):
 				self._velocity_button.add_value_listener(self._velocity_value, identify_sender=True)
 
+
 			
 	# Handle button shifted and velocity selection OK			
 	def _velocity_value(self, value, sender): 
