@@ -97,6 +97,18 @@ class StepSequencerComponent(CompoundComponent):
         # TODO: maybe clean this... this should be done on enable.
         # self.on_clip_slot_changed()
 
+        # Define button mappings: index -> (component, attribute_name, setter_method, assignment_key)
+        self._button_mappings = {
+            0: (self._track_controller, '_start_stop_button', 'set_start_stop_button', 'start_stop_button'),
+            1: (self, '_lock_button', 'set_lock_button', 'lock_button'),
+            2: (None, None, None, 'quantization_button'),  # Usually unassigned (was quantization)
+            3: (self._note_selector, '_subBank_selector', 'set_subBank_selector', 'note_subbank'),
+            4: (None, None, None, 'scale_selector_button'),  # Usually unassigned (was scale selector)
+            5: (self._note_editor, '_velocity_button', 'set_velocity_button', 'note_velocity'),
+            6: (self, '_loop_selector_button', 'set_loop_selector_button', 'loop_selector_button'),
+            7: (None, None, None, 'mute_shift_button'),  # Usually unassigned (was mute shift)
+        }
+        
     def disconnect(self):
         # Clean up velocity listeners if they exist
         if hasattr(self, '_velocity_listeners_added') and self._velocity_listeners_added:
@@ -1060,17 +1072,7 @@ class StepSequencerComponent(CompoundComponent):
             self._temp_button_assignments = {}
         self._temp_button_assignments.clear()
         
-        # Define button mappings: index -> (component, attribute_name, setter_method, assignment_key)
-        button_mappings = {
-            0: (self._track_controller, '_start_stop_button', 'set_start_stop_button', 'start_stop_button'),
-            1: (self, '_lock_button', 'set_lock_button', 'lock_button'),
-            2: (None, None, None, 'quantization_button'),  # Usually unassigned (was quantization)
-            3: (self._note_selector, '_subBank_selector', 'set_subBank_selector', 'note_subbank'),
-            4: (None, None, None, 'scale_selector_button'),  # Usually unassigned (was scale selector)
-            5: (self._note_editor, '_velocity_button', 'set_velocity_button', 'note_velocity'),
-            6: (self, '_loop_selector_button', 'set_loop_selector_button', 'loop_selector_button'),
-            7: (None, None, None, 'mute_shift_button'),  # Usually unassigned (was mute shift)
-        }
+        button_mappings = self._button_mappings
         
         # Loop through and disconnect buttons that are not ignored
         for button_index, (component, attribute, setter, key) in button_mappings.items():
@@ -1093,21 +1095,9 @@ class StepSequencerComponent(CompoundComponent):
         """
         if not hasattr(self, '_temp_button_assignments'):
             return
-            
-        # Define restoration mappings: assignment_key -> (component, setter_method)
-        restore_mappings = {
-            'start_stop_button': (self._track_controller, 'set_start_stop_button'),
-            'lock_button': (self, 'set_lock_button'),
-            'quantization_button': (None, None),  # Usually unassigned
-            'note_subbank': (self._note_selector, 'set_subBank_selector'),
-            'scale_selector_button': (None, None),  # Usually unassigned
-            'note_velocity': (self._note_editor, 'set_velocity_button'),
-            'loop_selector_button': (self, 'set_loop_selector_button'),
-            'mute_shift_button': (None, None),  # Usually unassigned
-        }
         
         # Loop through and restore button assignments
-        for key, (component, setter) in restore_mappings.items():
+        for index, (component, attribute_name, setter, key) in self._button_mappings.items():
             if key in self._temp_button_assignments and component:
                 getattr(component, setter)(self._temp_button_assignments[key])
             
