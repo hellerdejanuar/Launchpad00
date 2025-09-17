@@ -1089,15 +1089,20 @@ class StepSequencerComponent(CompoundComponent):
                 if button and i not in buttons_to_ignore:
                     button.set_light("DefaultButton.Disabled")
 
-    def _engage_side_buttons(self):
+    def _engage_side_buttons(self, buttons_to_ignore=None):
         """
         Reconnect side button functionality that was previously disengaged
         """
+        if buttons_to_ignore is None:
+            buttons_to_ignore = []
+
         if not hasattr(self, '_temp_button_assignments'):
             return
         
         # Loop through and restore button assignments
         for index, (component, attribute_name, setter, key) in self._button_mappings.items():
+            if index in buttons_to_ignore:
+                continue
             if key in self._temp_button_assignments and component:
                 getattr(component, setter)(self._temp_button_assignments[key])
             
