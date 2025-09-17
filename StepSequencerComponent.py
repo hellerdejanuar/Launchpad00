@@ -175,7 +175,7 @@ class StepSequencerComponent(CompoundComponent):
         # Set up loop selector activation button (side_button[6])
         self._loop_selector_button = None
         self.set_loop_selector_button(self._side_buttons[6])
-            
+
     #Allow to manipulate the LP grid and Live's Clip notes (add/del, velocity, mute, etc)
     #In charge of refreshing the notes LED matrix
     #Display page indicator for multinote mode    
@@ -194,7 +194,7 @@ class StepSequencerComponent(CompoundComponent):
             combo_press_listeners=self._side_buttons
         )
 
-        self._note_editor.set_velocity_button(self._side_buttons[5])
+        self._note_editor.set_velocity_button(velocity_button_handler)
 
     #Set 4x4 lower left matrix section that allows note selection in Normal Mode
     def _set_note_selector(self):

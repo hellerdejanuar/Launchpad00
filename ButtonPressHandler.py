@@ -1,71 +1,76 @@
-# -*- coding: utf-8 -*-
-
 from .ConfigurableButtonElement import ConfigurableButtonElement
-from .Log import log
-from _Framework.ButtonElement import ButtonElement
-from _Framework.InputControlElement import *
 from threading import Timer
+from .Log import log
 
-class ButtonPressHandler(ButtonElement):
+class ButtonPressHandler(ConfigurableButtonElement):
     """
-    A middleware class to handle different button gestures: press, release, hold, hold_release.
+    A ButtonElement-compatible wrapper that adds press/hold/release/combo behavior.
     """
 
-    def __init__(self, 
-                 mode_button, 
-                 press_fn = None, 
-                 release_fn = None, 
-                 hold_fn = None, 
-                 hold_release_fn = None, 
-                 combo_press_fn = None,
-                 combo_release_fn = None,
-                 hold_time = 1.0,
-                 combo_press_listeners=[], *a, **k):
-        super(ButtonPressHandler, self).__init__(True, MIDI_NOTE_TYPE, 0, 0, *a, **k)
+    def __init__(self, mode_button: ConfigurableButtonElement,
+                 press_fn=None, release_fn=None, hold_fn=None, hold_release_fn=None,
+                 combo_press_fn=None, combo_release_fn=None,
+                 hold_time=1.0, combo_press_listeners=None, *a, **k):
+        
+        super().__init__(
+            mode_button.is_momentary(),
+            mode_button.message_type(),
+            mode_button.message_channel(),
+            mode_button.message_identifier(),
+            *a, **k
+        )
+
         self._mode_button = mode_button
-        self._press_fn = press_fn if isinstance(press_fn, list) else [press_fn]       
-        self._release_fn = release_fn if isinstance(release_fn, list) else [release_fn]
-        self._hold_fn = hold_fn if isinstance(hold_fn, list) else [hold_fn]
-        self._hold_release_fn = hold_release_fn if isinstance(hold_release_fn, list) else [hold_release_fn]
-        self._combo_press_fn = combo_press_fn if isinstance(combo_press_fn, list) else [combo_press_fn]
-        self._combo_release_fn = combo_release_fn if isinstance(combo_release_fn, list) else [combo_release_fn]
+        self._press_fn = press_fn if isinstance(press_fn, list) else [press_fn] if press_fn else []
+        self._release_fn = release_fn if isinstance(release_fn, list) else [release_fn] if release_fn else []
+        self._hold_fn = hold_fn if isinstance(hold_fn, list) else [hold_fn] if hold_fn else []
+        self._hold_release_fn = hold_release_fn if isinstance(hold_release_fn, list) else [hold_release_fn] if hold_release_fn else []
+        self._combo_press_fn = combo_press_fn if isinstance(combo_press_fn, list) else [combo_press_fn] if combo_press_fn else []
+        self._combo_release_fn = combo_release_fn if isinstance(combo_release_fn, list) else [combo_release_fn] if combo_release_fn else []
 
-        if combo_press_listeners:
-            self._combo_press_listeners = list(combo_press_listeners)
+        self._combo_press_listeners = list(combo_press_listeners) if combo_press_listeners else []
+        if self._mode_button in self._combo_press_listeners:
+            self._combo_press_listeners.remove(self._mode_button)
 
         self._hold_timer = None
         self._hold_time = hold_time
         self._is_held = False
         self._is_combo = False
 
+        # Register listeners
         self._mode_button.add_value_listener(self._button_value_changed)
-        if self._mode_button in self._combo_press_listeners:
-            self._combo_press_listeners.remove(self._mode_button)
-            
         for listener in self._combo_press_listeners:
             listener.add_value_listener(self._combo_press_value_changed)
 
+    # --- Explicitly forward API methods/properties so no recursion ---
+    def is_momentary(self): return self._mode_button.is_momentary()
+    def message_type(self): return self._mode_button.message_type()
+    def message_channel(self): return self._mode_button.message_channel()
+    def message_identifier(self): return self._mode_button.message_identifier()
+    def is_pressed(self): return self._mode_button.is_pressed()
+
+    def send_value(self, *a, **k): return self._mode_button.send_value(*a, **k)
+    def set_light(self, *a, **k): return self._mode_button.set_light(*a, **k)
+    def add_value_listener(self, *a, **k): return self._mode_button.add_value_listener(*a, **k)
+    def remove_value_listener(self, *a, **k): return self._mode_button.remove_value_listener(*a, **k)
+
+    # --- Gesture logic (unchanged from your version) ---
     def _button_value_changed(self, value):
-        log(f"BUTTON VALUE CHANGED: {str(value)} / IS_HELD:{str(self._is_held)} / IS_COMBO:{str(self._is_combo)} ")
-        if value is 127:
-            self._is_held = False  
+        log(f"BUTTON VALUE CHANGED: {value} / IS_HELD:{self._is_held} / IS_COMBO:{self._is_combo}")
+        if value == 127:
+            self._is_held = False
             self._start_hold_timer()
             for func in self._press_fn: func()
         else:
-            if self._is_combo: # Handle Combo Release
+            if self._is_combo:
                 for func in self._combo_release_fn: func()
                 self._is_combo = False
-
-            elif self._is_held: # Handle Hold Release
-                log("HELD RELESE")
+            elif self._is_held:
                 for func in self._hold_release_fn: func()
-                self._is_held = False   
-            else: # Handle Button Release
-                log(" RELESE")
+                self._is_held = False
+            else:
                 for func in self._release_fn: func()
-                self._is_held = False                
-
-
+                self._is_held = False
             self._cancel_hold_timer()
 
     def _combo_press_value_changed(self, value):
@@ -73,10 +78,9 @@ class ButtonPressHandler(ButtonElement):
             self._cancel_hold_timer()
             self._is_held = False
             self._is_combo = True
-
+            for func in self._combo_press_fn: func()
 
     def _start_hold_timer(self):
-        log("Timer...")
         self._cancel_hold_timer()
         self._hold_timer = Timer(self._hold_time, self._hold)
         self._hold_timer.start()
@@ -87,11 +91,9 @@ class ButtonPressHandler(ButtonElement):
             self._hold_timer = None
 
     def _hold(self):
-        log("HOLD()")
         if self._mode_button.is_pressed():
             self._is_held = True
-            if self._hold_fn:
-                self._hold_fn()
+            for func in self._hold_fn: func()
             self._cancel_hold_timer()
 
     def disconnect(self):
@@ -99,4 +101,4 @@ class ButtonPressHandler(ButtonElement):
         for listener in self._combo_press_listeners:
             listener.remove_value_listener(self._combo_press_value_changed)
         self._cancel_hold_timer()
-        super(ButtonPressHandler, self).disconnect()
+        super().disconnect()
