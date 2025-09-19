@@ -184,19 +184,7 @@ class NoteEditorComponent(ControlSurfaceComponent):
 				# Only mark the column corresponding to the page
 				if logical_x == physical_x or logical_x == physical_x + 8:
 					self._grid_back_buffer[physical_x][y] = "StepSequencer.NoteEditor.PageMarker"
-		
-	# Displays 3 buttons for the root of the scale and 1 for the in scale notes 	
-	def _display_note_markers(self, selected_subBank="B"):
-		# (out of scale notes buttons are dark) OK
 
-		# for i in range(0, int(self.height / self.number_of_lines_per_note)):
-		# # 	NoteBackground = f"NoteBackground_{selected_subBank}{i % 4}"
-		# 	# selected_subBank_background = f"{selected_subBank}{i % 4}"
-		# 	for j in range(0, self.width):
-		# 		self._grid_back_buffer[j][i] = f"StepSequencer.NoteEditor.NoteBackground_{selected_subBank}"
-		pass
-#*********************MATRIX*********************
-	
 	#Add listener and initialize note buffers OK
 	def set_matrix(self, matrix): 
 		if (matrix != self._matrix):
@@ -250,13 +238,10 @@ class NoteEditorComponent(ControlSurfaceComponent):
 			logical_y = physical_y - 4
 		return logical_x, logical_y
 
-
-
 	# Updates the LP LEDs OK
 	def _update_matrix(self):  
 		if self.is_enabled() and self._matrix!=None:
 			
-
 			# clear back buffer. BACKGROUND COLOR <--
 			for x in range(self._physical_width):
 				for y in range(self._physical_height):
@@ -289,12 +274,9 @@ class NoteEditorComponent(ControlSurfaceComponent):
 					self._display_selected_page()
 					if self._display_page_time + 0.25 < time.time():
 						self._display_page = False
-						
-
-
+					
 				# Display the notes in the 1st left column 
 				if self.is_multinote:
-					# self._display_note_markers()
 					# Display the current played page
 					if(self._current_page !=play_page):
 						self._current_page=play_page
