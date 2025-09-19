@@ -506,7 +506,7 @@ class NoteEditorComponent(ControlSurfaceComponent):
 		self._update_velocity_button()
 		self._update_matrix()
 		self._stepsequencer._note_selector.update()
-		self._stepsequencer._disconnect_side_button_functionality_for_velocity()
+		self._stepsequencer._disconnect_side_buttons_for_velocity()
 
 	def _cycle_thru_velocities(self):
 		"""
@@ -531,7 +531,7 @@ class NoteEditorComponent(ControlSurfaceComponent):
 		self._update_velocity_button()
 		self._update_matrix()
 		self._stepsequencer._note_selector.update()
-		self._stepsequencer._reconnect_side_button_functionality_for_velocity()
+		self._stepsequencer._reconnect_side_button_functionality()
 
 #*********************MUTE/BTN_SHIFT*********************
 

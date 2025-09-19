@@ -36,6 +36,7 @@ class ButtonPressHandler(ConfigurableButtonElement):
         self._hold_time = hold_time
         self._is_held = False
         self._is_combo = False
+        self._enabled = True
 
         # Register listeners
         self._mode_button.add_value_listener(self._button_value_changed)
@@ -54,9 +55,19 @@ class ButtonPressHandler(ConfigurableButtonElement):
     def add_value_listener(self, *a, **k): return self._mode_button.add_value_listener(*a, **k)
     def remove_value_listener(self, *a, **k): return self._mode_button.remove_value_listener(*a, **k)
 
+    def disable(self):
+        """Disable the handler without removing listeners"""
+        self._enabled = False
+
+    def enable(self):
+        """Enable the handler"""
+        self._enabled = True
+
     # --- Gesture logic (unchanged from your version) ---
     def _button_value_changed(self, value):
         log(f"BUTTON VALUE CHANGED: {value} / IS_HELD:{self._is_held} / IS_COMBO:{self._is_combo}")
+        if not self._enabled:
+            return
         if value == 127:
             self._is_held = False
             self._start_hold_timer()

@@ -26,6 +26,9 @@ class MainSelectorComponent(ModeSelectorComponent):
 
 
 	def __init__(self, matrix, top_buttons, side_buttons, config_button, osd, control_surface, note_repeat, c_instance):
+		# Store all ButtonPressHandler instances for systematic management
+		self._button_press_handlers = []
+		
 		#verify matrix dimentions
 		assert isinstance(matrix, ButtonMatrixElement)
 		assert ((matrix.width() == 8) and (matrix.height() == 8))
@@ -113,6 +116,9 @@ class MainSelectorComponent(ModeSelectorComponent):
 		self._all_buttons = tuple(self._all_buttons)
 
 	def disconnect(self):
+		# Clean up all ButtonPressHandler instances first
+		self._cleanup_button_press_handlers()
+		
 		for button in self._modes_buttons:
 			button.remove_value_listener(self._mode_value)
 
@@ -310,6 +316,8 @@ class MainSelectorComponent(ModeSelectorComponent):
 			self._setup_device_controller(not as_active)
 			self._update_control_channels()
 			self._setup_instrument_controller(as_active)
+			# Re-enable handlers for this mode
+			self._enable_all_button_press_handlers()
 			self._mode_index = 4
 		elif mode == "melodic stepseq":
 			self._control_surface.show_message("MELODIC SEQUENCER MODE")
@@ -527,8 +535,12 @@ class MainSelectorComponent(ModeSelectorComponent):
 				self._activate_matrix(True)
 				self._activate_navigation_buttons(True)
 				self._config_button.send_value(32)
+				
+				# Enable step sequencer and ensure handlers are registered
 				self._stepseq.set_enabled(True)
+				# StepSeq will register its handlers during enable
 			else:
+				# Disable step sequencer
 				self._stepseq.set_enabled(False)
 
 	def _setup_step_sequencer2(self, as_active):
@@ -614,3 +626,16 @@ class MainSelectorComponent(ModeSelectorComponent):
 	#def _update_session_tempo_button(self):
 	#	if self._session != None:
 	#		self._session._update_session_tempo_button()
+			
+	def register_button_press_handler(self, handler):
+		"""Add a ButtonPressHandler to be managed by this component"""
+		if handler not in self._button_press_handlers:
+			self._button_press_handlers.append(handler)
+			
+	def _cleanup_button_press_handlers(self):
+		"""Clean up all ButtonPressHandler instances"""
+		for handler in self._button_press_handlers:
+			if handler and hasattr(handler, 'disconnect'):
+				handler.disconnect()
+		self._button_press_handlers = []
+

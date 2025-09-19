@@ -117,6 +117,11 @@ class StepSequencerComponent(CompoundComponent):
         if hasattr(self, '_velocity_listeners_added') and self._velocity_listeners_added:
             self._remove_velocity_side_button_listeners()
             
+        # Properly disconnect velocity button handler
+        if hasattr(self, '_velocity_button_handler'):
+            if self._velocity_button_handler and hasattr(self._velocity_button_handler, 'disconnect'):
+                self._velocity_button_handler.disconnect()
+            self._velocity_button_handler = None
         self._clip = None
 
         self._lock_button = None
@@ -177,7 +182,8 @@ class StepSequencerComponent(CompoundComponent):
     def _set_note_editor(self): 
         self._note_editor = self.register_component(NoteEditorComponent(self, self._matrix, self._control_surface))
 
-        velocity_button_handler = ButtonPressHandler(
+        # Create and store velocity button handler but don't register yet
+        self._velocity_button_handler = ButtonPressHandler(
             self._side_buttons[5],
             press_fn=self._note_editor._enable_velocity_mode,
             release_fn=[self._note_editor._cycle_thru_velocities, 
@@ -188,8 +194,9 @@ class StepSequencerComponent(CompoundComponent):
             combo_release_fn=self._note_editor._disable_velocity_mode,
             combo_press_listeners=self._side_buttons
         )
-
-        self._note_editor.set_velocity_button(velocity_button_handler)
+        
+        # Set the handler but don't enable it yet
+        self._note_editor.set_velocity_button(self._velocity_button_handler)
 
     #Set 4x4 lower left matrix section that allows note selection in Normal Mode
     def _set_note_selector(self):
@@ -348,8 +355,16 @@ class StepSequencerComponent(CompoundComponent):
             if(self._drum_group_device): #Select the note 
                 self._note_selector.set_selected_note(self.index_of(self._drum_group_device.drum_pads,self._drum_group_device.view.selected_drum_pad)) #FIX set view again
 
+            # Enable components
             self._track_controller.set_enabled(enabled)    
             self._note_editor.set_enabled(enabled)
+            
+            # Register and enable velocity button handler
+            if hasattr(self, '_velocity_button_handler'):
+                if hasattr(self._control_surface, '_selector'):
+                    self._control_surface._selector.register_button_press_handler(self._velocity_button_handler)
+                self._velocity_button_handler.enable()
+            
             # update clip notes as they might have changed while we were sleeping
             self.on_clip_slot_changed()
             # call super.set_enabled()
@@ -360,11 +375,19 @@ class StepSequencerComponent(CompoundComponent):
             self._update_OSD()
 
         else:
+            # Disable velocity button handler if exists
+            if hasattr(self._note_editor, '_velocity_button') and self._note_editor._velocity_button:
+                velocity_button = self._note_editor._velocity_button
+                if hasattr(velocity_button, 'disable'):
+                    velocity_button.disable()
+                    
+            # Disable components
             self._track_controller.set_enabled(enabled)
             self._loop_selector.set_enabled(enabled)
             self._note_selector.set_enabled(enabled)
             self._note_editor.set_enabled(enabled)
             CompoundComponent.set_enabled(self, enabled)
+            
         if not enabled:
             self._remove_scale_listeners()
         else:
@@ -813,7 +836,7 @@ class StepSequencerComponent(CompoundComponent):
             if value != 0:  # Button pressed - toggle the state
                 self._loop_selector_active = not self._loop_selector_active
                 if self._loop_selector_active:
-                    self._disconnect_side_button_functionality()
+                    self._disconnect_side_buttons_for_loop()
                     self._loop_selector.set_enabled(True)
                     self._loop_selector.update()  # Force update when enabling
                 else:
@@ -848,7 +871,7 @@ class StepSequencerComponent(CompoundComponent):
             else:
                 self._loop_selector_button.set_light("DefaultButton.Disabled")
 
-    def _disconnect_side_button_functionality(self):
+    def _disconnect_side_buttons_for_loop(self):
         """Disconnect side button functionality when entering loop selector mode (except start/stop)"""
         # Store current assignments and disconnect components from side buttons
         self._original_button_assignments.clear()
@@ -862,10 +885,14 @@ class StepSequencerComponent(CompoundComponent):
                 self._original_button_assignments['note_subbank'] = self._note_selector._subBank_selector
                 self._note_selector.set_subBank_selector(None)
         
-        # Disconnect note editor from side_button[5] (velocity button)
+        # Handle velocity button (ButtonPressHandler)
         if self._note_editor and hasattr(self._note_editor, '_velocity_button'):
             if self._note_editor._velocity_button:
                 self._original_button_assignments['note_velocity'] = self._note_editor._velocity_button
+                # If it's a ButtonPressHandler, disable it
+                if hasattr(self._note_editor._velocity_button, 'disable'):
+                    self._note_editor._velocity_button.disable()
+                # Still store the reference but don't disconnect it
                 self._note_editor.set_velocity_button(None)
         
         # Disconnect lock button from side_button[1] 
@@ -880,7 +907,7 @@ class StepSequencerComponent(CompoundComponent):
                 if button and i not in [0, 1, 2, 3, 4, 6]:
                     button.set_light("DefaultButton.Disabled")
 
-    def _disconnect_side_button_functionality_for_velocity(self):
+    def _disconnect_side_buttons_for_velocity(self):
         """Disconnect side button functionality when entering velocity mode (except velocity button itself)"""
         # Use the generic function, ignoring only the velocity button (index 5)
         self._disengage_side_buttons(buttons_to_ignore=[5])
@@ -890,58 +917,53 @@ class StepSequencerComponent(CompoundComponent):
         self._setup_velocity_side_button_listeners()
         self._velocity_listeners_added = True
 
-    def _reconnect_side_button_functionality_for_velocity(self):
-        """Reconnect side button functionality when exiting velocity mode"""
-        # Immediately remove velocity selection listeners first
-        self._remove_velocity_side_button_listeners()
-        # Clear velocity colors immediately
-        self._clear_velocity_side_button_colors()
-        # Then restore normal functionality
-        self._engage_side_buttons()
-
     def _reconnect_side_button_functionality(self):
         """Reconnect side button functionality when exiting loop selector mode"""
-        # Restore NoteEditor MAIN button assignments
-        # start/stop button (side_button[0]) was never disconnected, so no need to reconnect
-            
-        if 'note_subbank' in self._original_button_assignments:
-            self._note_selector.set_subBank_selector(self._original_button_assignments['note_subbank'])
-            
-        if 'note_velocity' in self._original_button_assignments:
-            self._note_editor.set_velocity_button(self._original_button_assignments['note_velocity'])
-            
-        if 'lock_button' in self._original_button_assignments:
-            self.set_lock_button(self._original_button_assignments['lock_button'])
+        # Handle stored button assignments from both temporary and original storage
+        assignments_to_restore = {}
+        assignments_to_restore.update(getattr(self, '_temp_button_assignments', {}))
+        assignments_to_restore.update(getattr(self, '_original_button_assignments', {}))
         
+        # Re-enable any disabled ButtonPressHandlers first
+        for button_obj in assignments_to_restore.values():
+            if hasattr(button_obj, 'enable'):
+                button_obj.enable()
+        
+        # Restore all button assignments using the button mappings
+        for index, (component, attribute_name, setter, key) in self._button_mappings.items():
+            if key in assignments_to_restore and component:
+                getattr(component, setter)(assignments_to_restore[key])
+                
         # Clear stored assignments
-        self._original_button_assignments.clear()
-        
-        # Re-enable all side buttons first and clear any disabled lights
+        if hasattr(self, '_temp_button_assignments'):
+            self._temp_button_assignments.clear()
+        if hasattr(self, '_original_button_assignments'):
+            self._original_button_assignments.clear()
+            
+        # Re-enable all side buttons and clear disabled states
         if self._side_buttons:
             for i, button in enumerate(self._side_buttons):
                 if button and i != 6:  # Skip loop selector activation button
                     button.set_enabled(True)
-                    # Clear any disabled state lights
                     button.clear_send_cache()
         
         # Clear all side button displays
         self._clear_side_buttons()
         
-        # Force comprehensive update of all components to restore their button states
+        # Force comprehensive update of all components
         self._update_buttons()
         self._update_note_selector()
         self._update_note_editor()
         
-        # Explicitly update velocity button 
+        # Explicitly update specific buttons
         if self._note_editor and hasattr(self._note_editor, '_update_velocity_button'):
             self._note_editor._update_velocity_button()
-            
-        # Update lock button
         self._update_lock_button()
             
         if self._track_controller:
             self._track_controller.update()
-        # Force a complete update cycle
+            
+        # Force complete update cycle
         self.update()
 
     def _clear_side_buttons(self):
@@ -988,28 +1010,6 @@ class StepSequencerComponent(CompoundComponent):
                 if button and i not in buttons_to_ignore:
                     button.set_light("DefaultButton.Disabled")
 
-    def _engage_side_buttons(self, buttons_to_ignore=None):
-        """
-        Reconnect side button functionality that was previously disengaged
-        """
-        if buttons_to_ignore is None:
-            buttons_to_ignore = []
-
-        if not hasattr(self, '_temp_button_assignments'):
-            return
-        
-        # Loop through and restore button assignments
-        for index, (component, attribute_name, setter, key) in self._button_mappings.items():
-            if index in buttons_to_ignore:
-                continue
-            if key in self._temp_button_assignments and component:
-                getattr(component, setter)(self._temp_button_assignments[key])
-            
-        # Clear the assignments
-        self._temp_button_assignments.clear()
-        
-        # Force comprehensive refresh
-        self._update_buttons()
 
     def _update_velocity_side_button_colors(self):
         """Set velocity colors on side buttons 0-4 when in velocity mode"""
@@ -1036,6 +1036,12 @@ class StepSequencerComponent(CompoundComponent):
                     self._side_buttons[i].set_light("DefaultButton.Disabled")
                     # Also clear any cached button state
                     self._side_buttons[i].clear_send_cache()
+                    
+        # Disable velocity button handler if exists
+        if hasattr(self._note_editor, '_velocity_button') and self._note_editor._velocity_button:
+            velocity_button = self._note_editor._velocity_button
+            if hasattr(velocity_button, 'disable'):
+                velocity_button.disable()
 
     def _setup_velocity_side_button_listeners(self):
         """Add velocity selection listeners to side buttons 0-4"""
