@@ -92,7 +92,6 @@ class StepSequencerComponent(CompoundComponent):
         self._set_quantization_function()
         self._set_mute_shift_function()
         self._set_lock_function()
-        self._set_mode_function()
         self._scale_updated()
         # TODO: maybe clean this... this should be done on enable.
         # self.on_clip_slot_changed()
@@ -131,11 +130,6 @@ class StepSequencerComponent(CompoundComponent):
         self._track_controller = None
 
 # SET FUNCTIONS
-    def _set_mode_function(self): #Change the resolution of the sequencer
-        self._mode_button = None
-        # self.set_mode_button(self._side_buttons[5]) #SndB
-        self._last_mode_button_press = time.time()
-        self._number_of_lines_per_note = 1
 
     def _set_lock_function(self):
         self._is_locked = False
@@ -490,7 +484,6 @@ class StepSequencerComponent(CompoundComponent):
     def _update_buttons(self):
         self._update_quantization_button()
         self._update_lock_button()
-        self._update_mode_button()
         self._update_mute_shift_button()
         self._update_scale_selector_button()
         self._update_loop_selector_button()
@@ -790,52 +783,6 @@ class StepSequencerComponent(CompoundComponent):
                 
             self._note_editor._is_mute_shifted = self._is_mute_shifted
             self._update_mute_shift_button()
-            
-# MODE
-    def _update_mode_button(self):
-        if self.is_enabled():
-            if (self._mode_button != None):
-                if self._clip != None:
-                    self._mode_button.set_on_off_values("StepSequencer.Mode")
-                    if self._mode == STEPSEQ_MODE_MULTINOTE:
-                        self._mode_button.turn_on()
-                        self._osd.update()
-                    else:
-                        self._mode_button.turn_off()
-                        self._osd.update()
-                else:
-                    self._mode_button.set_light("DefaultButton.Disabled")
-
-    def set_mode_button(self, button):#remove old mode button listener and adds new one 
-        assert (isinstance(button, (ButtonElement, type(None))))
-        if (self._mode_button != button):
-            if (self._mode_button != None):
-                self._mode_button.remove_value_listener(self._mode_button_value)
-            self._mode_button = button
-            if (self._mode_button != None):
-                assert isinstance(button, ButtonElement)
-                self._mode_button.add_value_listener(self._mode_button_value, identify_sender=True)
-
-    def _mode_button_value(self, value, sender):
-        assert (self._mode_button != None)
-        assert (value in range(128))
-        if self.is_enabled() and self._clip != None:
-            if ((value is not 0) or (not sender.is_momentary())):
-                self._last_mode_button_press = time.time()
-            else:
-                if self._mode == STEPSEQ_MODE_MULTINOTE and time.time() - self._last_mode_button_press > 0.25:
-                    if(self._number_of_lines_per_note == 1):
-                        number_of_lines_per_note = 2
-                    else:
-                        number_of_lines_per_note = 1
-                    self.set_mode(STEPSEQ_MODE_MULTINOTE, number_of_lines_per_note)
-
-                elif self._mode != STEPSEQ_MODE_MULTINOTE:
-                    self.set_mode(STEPSEQ_MODE_MULTINOTE, self._number_of_lines_per_note)
-
-                else:
-                    self.set_mode(STEPSEQ_MODE_NORMAL, self._number_of_lines_per_note)
-                self._scale_updated()
 
 # QUANTIZE
     def _update_quantization_button(self):
