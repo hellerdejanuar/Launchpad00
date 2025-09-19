@@ -73,6 +73,10 @@ class StepSequencerComponent(CompoundComponent):
         # displayed Bank
         self._selected_subBank = "A"
 
+        
+        # Quantization
+        self._quantization_index = 2
+
         # Initialize loop selector state early (needed by quantization setup)
         self._loop_selector_active = False
         # Store original button assignments for proper disconnect/reconnect
@@ -89,7 +93,7 @@ class StepSequencerComponent(CompoundComponent):
         self._set_note_selector()
         self._set_track_controller()
         self._set_scale_selector()
-        self._set_quantization_function()
+        self.set_quantization(QUANTIZATION_MAP[self._quantization_index])
         self._set_mute_shift_function()
         self._set_lock_function()
         self._scale_updated()
@@ -117,7 +121,6 @@ class StepSequencerComponent(CompoundComponent):
 
         self._lock_button = None
         self._shift_button = None
-        self._quantization_button = None
         self._top_buttons = None
         self._side_buttons = None
         self._matrix = None
@@ -147,11 +150,9 @@ class StepSequencerComponent(CompoundComponent):
         self._is_mute_shifted = False
 
     def _set_quantization_function(self):
-        self._quantization_index = 2
-        self.set_quantization(QUANTIZATION_MAP[self._quantization_index])
+
         self._quantization_button = None
         self._last_quantize_button_press = time.time()
-        # self.set_quantization_button(self._side_buttons[2])#SndA
 
     # Set loop selector using side buttons 1-4, activated by holding side button 6
     def _set_loop_selector(self):
@@ -482,7 +483,6 @@ class StepSequencerComponent(CompoundComponent):
         self._note_editor.update()
 
     def _update_buttons(self):
-        self._update_quantization_button()
         self._update_lock_button()
         self._update_mute_shift_button()
         self._update_scale_selector_button()
@@ -672,7 +672,6 @@ class StepSequencerComponent(CompoundComponent):
             self._loop_selector.set_playhead(self._playhead, Settings.STEPSEQ__AUTO_SCROLL)
             self._note_selector.set_playhead(self._playhead)
             self._note_editor.set_playhead(self._playhead)
-            self.updateQuantizationButton()
 
 # DRUM_GROUP_DEVICE
     def _update_drum_group_device(self):
@@ -785,53 +784,6 @@ class StepSequencerComponent(CompoundComponent):
             self._update_mute_shift_button()
 
 # QUANTIZE
-    def _update_quantization_button(self):
-        if self.is_enabled() and self._quantization_button != None:
-            if self._clip != None:
-                self._quantization_button.set_light(self.QUANTIZATION_COLOR_MAP[self._quantization_index])
-            else:
-                self._quantization_button.set_light("DefaultButton.Disabled")
-
-    # Refresh button and its listener OK
-    def set_quantization_button(self, button):
-        assert (isinstance(button, (ButtonElement, type(None))))
-        if (self._quantization_button != button):
-            if (self._quantization_button != None):
-                self._quantization_button.remove_value_listener(self._quantization_button_value)
-            self._quantization_button = button
-            if (self._quantization_button != None):
-                self._quantization_button.add_value_listener(self._quantization_button_value, identify_sender=True)
-
-    # Handle button holded and quantization resolution selection OK    
-    def _quantization_button_value(self, value, sender):
-        assert (self._quantization_button != None)
-        assert (value in range(128))
-        if self.is_enabled() and self._clip != None:
-            now = time.time()
-            if ((value is not 0) or (not sender.is_momentary())):
-                self._last_quantize_button_press = now
-            else:
-                if now - self._last_quantize_button_press > 0.5:
-                    self._control_surface.show_message("Step Sequencer: duplicate clip")
-                    self.duplicate_clip()
-                else:
-                    if(self._mode == STEPSEQ_MODE_SCALE_EDIT):
-                        self._quantization_index = (self._quantization_index - 1+len(QUANTIZATION_MAP)) % len(QUANTIZATION_MAP)
-                    else:
-                        self._quantization_index = (self._quantization_index + 1) % len(QUANTIZATION_MAP)
-                    self.set_quantization(QUANTIZATION_MAP[self._quantization_index])
-                    self._control_surface.show_message("QUANTIZATION : "+QUANTIZATION_NAMES[self._quantization_index])
-                    
-                    self._update_quantization_button()
-
-
-    def updateQuantizationButton(self):
-        if self.is_enabled() and self._quantization_button != None and self._playhead != None:
-            if(self._beat == int(self._playhead)):
-                self._quantization_button.set_light(self.QUANTIZATION_COLOR_MAP_LOW[self._quantization_index])
-            else:
-                self._beat = int(self._playhead)
-                self._update_quantization_button()
 
     def set_quantization(self, quantization):
         self._quantization = quantization
