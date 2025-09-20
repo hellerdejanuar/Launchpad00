@@ -2,23 +2,20 @@ from .ConfigurableButtonElement import ConfigurableButtonElement
 from threading import Timer
 from .Log import log
 
-class ButtonPressHandler(ConfigurableButtonElement):
+class ButtonPressHandler:
     """
     A ButtonElement-compatible wrapper that adds press/hold/release/combo behavior.
+    Delegates button functionality to an underlying ConfigurableButtonElement while
+    adding gesture detection like press, hold, release and combos.
     """
 
     def __init__(self, mode_button: ConfigurableButtonElement,
                  press_fn=None, release_fn=None, hold_fn=None, hold_release_fn=None,
                  combo_press_fn=None, combo_release_fn=None,
-                 hold_time=1.0, combo_press_listeners=None, *a, **k):
+                 hold_time=1.0, combo_press_listeners=None):
         
-        super().__init__(
-            mode_button.is_momentary(),
-            mode_button.message_type(),
-            mode_button.message_channel(),
-            mode_button.message_identifier(),
-            *a, **k
-        )
+        # Store the wrapped button
+        self._mode_button = mode_button
 
         self._mode_button = mode_button
         self._press_fn = press_fn if isinstance(press_fn, list) else [press_fn] if press_fn else []
@@ -43,6 +40,11 @@ class ButtonPressHandler(ConfigurableButtonElement):
         for listener in self._combo_press_listeners:
             listener.add_value_listener(self._combo_press_value_changed)
 
+        # Register listeners
+        self._mode_button.add_value_listener(self._button_value_changed)
+        for listener in self._combo_press_listeners:
+            listener.add_value_listener(self._combo_press_value_changed)
+
     # --- Explicitly forward API methods/properties so no recursion ---
     def is_momentary(self): return self._mode_button.is_momentary()
     def message_type(self): return self._mode_button.message_type()
@@ -50,10 +52,30 @@ class ButtonPressHandler(ConfigurableButtonElement):
     def message_identifier(self): return self._mode_button.message_identifier()
     def is_pressed(self): return self._mode_button.is_pressed()
 
+    # Delegate basic button functionality directly to wrapped button
     def send_value(self, *a, **k): return self._mode_button.send_value(*a, **k)
     def set_light(self, *a, **k): return self._mode_button.set_light(*a, **k)
-    def add_value_listener(self, *a, **k): return self._mode_button.add_value_listener(*a, **k)
-    def remove_value_listener(self, *a, **k): return self._mode_button.remove_value_listener(*a, **k)
+    def turn_on(self): return self._mode_button.turn_on()
+    def turn_off(self): return self._mode_button.turn_off()
+    
+    # Delegate value listener management to wrapped button
+    def add_value_listener(self, callback, identify_sender=False):
+        self._mode_button.add_value_listener(callback, identify_sender)
+        
+    def remove_value_listener(self, callback):
+        self._mode_button.remove_value_listener(callback)
+        
+    def set_channel(self, channel):
+        self._mode_button.set_channel(channel)
+        
+    def set_enabled(self, enabled):
+        self._mode_button.set_enabled(enabled)
+        
+    def use_default_message(self):
+        self._mode_button.use_default_message()
+        
+    def clear_send_cache(self):
+        self._mode_button.clear_send_cache()
 
     def disable(self):
         """Disable the handler without removing listeners"""
@@ -112,4 +134,3 @@ class ButtonPressHandler(ConfigurableButtonElement):
         for listener in self._combo_press_listeners:
             listener.remove_value_listener(self._combo_press_value_changed)
         self._cancel_hold_timer()
-        super().disconnect()

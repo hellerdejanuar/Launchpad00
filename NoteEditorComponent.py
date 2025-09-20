@@ -478,7 +478,9 @@ class NoteEditorComponent(ControlSurfaceComponent):
 
 	# Refresh button and its listener OK
 	def set_velocity_button(self, button): 
-		assert (isinstance(button, (ButtonElement, type(None))))
+		# Allow ButtonPressHandler or ButtonElement or None
+		from .ButtonPressHandler import ButtonPressHandler
+		assert (isinstance(button, (ButtonElement, ButtonPressHandler, type(None))))
 		if (button != self._velocity_button):
 			if (self._velocity_button != None):
 				self._velocity_button.remove_value_listener(self._velocity_value)
