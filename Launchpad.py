@@ -173,8 +173,10 @@ class Launchpad(ControlSurface):
 			self.set_highlighting_session_component(self._selector.session_component())
 			# due to our 2 stage init, we need to rebuild midi map 
 			self.request_rebuild_midi_map()
-			# and request update 
+			# and request update
 			self._selector.update()
+			# Set the initial mode after selector is fully initialized
+			self._selector.set_mode(Settings.DEFAULT_MAIN_MODE)
 			if self._lpx:
 				self.log_message("LaunchPad95 (LPX) Loaded !")
 			elif self._mk3_rgb:
@@ -355,7 +357,6 @@ class Launchpad(ControlSurface):
 					if isinstance(control, ConfigurableButtonElement):
 						control.force_next_send()
 
-			self._selector.set_mode(0)
 			self.set_enabled(enabled)
 			self._suppress_send_midi = False
 		else:

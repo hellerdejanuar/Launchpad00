@@ -61,7 +61,7 @@ class MainSelectorComponent(ModeSelectorComponent):
 
 		#initialize index variables
 		self._mode_index = 0 #Inherited from parent
-		self._main_mode_index = 0 #LP original modes
+		self._main_mode_index = Settings.DEFAULT_MAIN_MODE #LP original modes
 		self._sub_mode_list = [0, 0, 0, 0]
 		for index in range(4):
 			self._sub_mode_list[index] = 0
@@ -328,6 +328,9 @@ class MainSelectorComponent(ModeSelectorComponent):
 			self._setup_step_sequencer(not as_active)
 			self._setup_step_sequencer2(as_active)
 			self._update_control_channels()
+			# Force update to ensure side button lights are set correctly
+			if self._stepseq2 is not None:
+				self._stepseq2.update()
 			self._mode_index = 7
 		elif mode == "user 1":
 			self._control_surface.show_message("USER 1 MODE" )
@@ -352,6 +355,9 @@ class MainSelectorComponent(ModeSelectorComponent):
 			self._setup_step_sequencer2(not as_active)
 			self._setup_step_sequencer(as_active)
 			self._update_control_channels()
+			# Force update to ensure side button lights are set correctly
+			if self._stepseq is not None:
+				self._stepseq.update()
 			self._mode_index = 6
 		elif mode == "device":
 			self._control_surface.show_message("DEVICE CONTROLLER MODE")
@@ -488,6 +494,8 @@ class MainSelectorComponent(ModeSelectorComponent):
 						button.use_default_message()# Reset to original channel
 						button.force_next_send()#Flush
 			self._instrument_controller.set_enabled(as_active)#Enable/disable instrument controller
+			if as_active and self._instrument_controller is not None:
+				self._instrument_controller.update()
 
 	def _setup_device_controller(self, as_active):
 		if self._device_controller != None:
@@ -567,6 +575,8 @@ class MainSelectorComponent(ModeSelectorComponent):
 				self._sub_modes.release_controls()
 
 		self._sub_modes.set_enabled(as_active)
+		if as_active and self._sub_modes is not None:
+			self._sub_modes.update()
 
 	def _init_session(self):
 		#self._session.set_stop_clip_value("Session.StopClip")

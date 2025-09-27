@@ -15,6 +15,9 @@ class Settings():
     # Should the step sequencer scroll automatically to the currently playing page
     STEPSEQ__AUTO_SCROLL = False
 
+    # Default main mode
+    DEFAULT_MAIN_MODE = 2
+
     # configure what user modes buttons do.
     # the 3 first value configure the 3 sub modes of button user mode 1,
     # and following ones are for user mode 2 button
